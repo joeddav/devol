@@ -31,12 +31,12 @@ class GenomeHandler:
                 if i == 0:
                     convolution = Convolution2D(
                                         genome[offset + 1], 3, 3,
-                                        bordermode='same',
+                                        border_mode='same',
                                         input_shape=(1, 28, 28))
                 else:
                     convolution = Convolution2D(
                                         genome[offset + 1], 3, 3,
-                                        bordermode='same')
+                                        border_mode='same')
                 model.add(convolution)
                 if genome[offset + 2]:
                     model.add(BatchNormalization())
