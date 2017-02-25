@@ -1,6 +1,8 @@
 import numpy as np
 from keras.models import Sequential
-from keras.layers import Convolution2D, MaxPooling2D, BatchNormalization, Dense, Dropout, Activation
+from keras.layers import Convolution2D, MaxPooling2D, BatchNormalization
+from keras.layers import Dense, Dropout, Activation
+
 
 # Just handles decoding from genome strings into Keras models
 class GenomeDecoder:
