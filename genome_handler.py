@@ -52,7 +52,12 @@ class GenomeHandler:
         model.add(Flatten())
 
         for i in range(self.dense_layer_size):
-            pass
+            if genome[offset]:
+                model.add(Dense(genome[offset + 1]))
+            if genome[offset + 2]:
+                model.add(BatchNormalization())
+            model.add(Activation(self.activation[genome[offset + 3]]))
+            model.add(Dropout(genome[offset + 4]))
 
         model.compile(loss='categorical_crossentropy',
                       optimizer=self.optimizer[genome[offset]],
