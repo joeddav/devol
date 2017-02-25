@@ -5,12 +5,15 @@ from keras.layers import Dense, Dropout, Activation
 
 
 # Just handles decoding from genome strings into Keras models
-class GenomeDecoder:
+class Genome:
 
     # Returns a compiled keras model
     def decode(self, genome):
         pass
-
+    
+    # Returns one randomly create genome
+    def generateRandom(self):
+        pass
 
 # Our genetic algorithm.
 # This will contain methods for fitness, crossover, mutation, etc.
