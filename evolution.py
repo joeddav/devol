@@ -2,17 +2,25 @@ import numpy as np
 from keras.models import Sequential
 from keras.layers import Convolution2D, MaxPooling2D, BatchNormalization
 from keras.layers import Dense, Dropout, Activation
+from keras.utils import np_utils
 from keras.datasets import mnist
 from genome_handler import GenomeHandler
 import random as rand
 
 # Our genetic algorithm.
 # This will contain methods for fitness, crossover, mutation, etc.
-class Evolutions:
+class Evolution:
 
     def __init__(self):
         self.genome_handler = GenomeHandler()
-        (self.x_train, self.y_train), (self.x_test, self.y_test) = mnist.load_data()
+        self.loadMNIST()
+
+    def loadMNIST(self):
+        (x_train, y_train), (x_test, y_test) = mnist.load_data()
+        self.x_train = x_train.reshape(x_train.shape[0], 1, 28, 28).astype('float32') / 255
+        self.y_train = y_train.reshape(y_train.shape[0], 1, 28, 28).astype('float32') / 255
+        self.x_test = np_utils.to_categorical(x_test)
+        self.y_test = np_utils.to_categorical(y_test)
 
     # Run the whole genetic algorithm
     def run(self, num_generations, pop_size):
@@ -20,7 +28,7 @@ class Evolutions:
         members = np.array([self.genome_handler.generate() for _ in range(pop_size)])
         fit = np.array([self.fitness(member) for member in members])
         pop = Population(members, fit)
-        
+
         # Evolve over generations
         for _ in range(num_generations):
             members = []
@@ -81,6 +89,3 @@ class Population:
             sum_fits += self.fitnesses[i]
             if sum_fits > dart:
                 return self.members[i]
-
-
-    
