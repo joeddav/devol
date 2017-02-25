@@ -2,17 +2,25 @@ import numpy as np
 from keras.models import Sequential
 from keras.layers import Convolution2D, MaxPooling2D, BatchNormalization
 from keras.layers import Dense, Dropout, Activation
+from keras.utils import np_utils
 from keras.datasets import mnist
 from genome_handler import GenomeHandler
 import random as rand
 
 # Our genetic algorithm.
 # This will contain methods for fitness, crossover, mutation, etc.
-class Evolutions:
+class Evolution:
 
     def __init__(self):
         self.genome_handler = GenomeHandler()
-        (self.x_train, self.y_train), (self.x_test, self.y_test) = mnist.load_data()
+        self.loadMNIST()
+
+    def loadMNIST(self):
+        (x_train, y_train), (x_test, y_test) = mnist.load_data()
+        self.x_train = x_train.reshape(x_train.shape[0], 1, 28, 28).astype('float32') / 255
+        self.y_train = y_train.reshape(y_train.shape[0], 1, 28, 28).astype('float32') / 255
+        self.x_test = np_utils.to_categorical(x_test)
+        self.y_test = np_utils.to_categorical(y_test)
 
     # Run the whole genetic algorithm
     def run(self, num_generations, pop_size):
@@ -20,15 +28,20 @@ class Evolutions:
         members = np.array([self.genome_handler.generate() for _ in range(pop_size)])
         fit = np.array([self.fitness(member) for member in members])
         pop = Population(members, fit)
-        # for _ in range(num_generations):
-        #     # crossover
-        #     for i in range()
 
-        # 1) generate population
-        # 2) for num_generations create new populations:
-            # 1) select two parents for crossover
-            # 2) select one parent for mutation
-            # generate fitness for each
+        # Evolve over generations
+        for _ in range(num_generations):
+            members = []
+            for i in range(int(pop_size*0.95)): # Crossover
+                members.append(self.crossover(pop.select(), pop.select()))
+            for i in range(int(pop_size*0.95), pop_size): # Carryover
+                members.append(pop.select())
+            for i in range(len(members)): # Mutation
+                if rand.uniform(0, 1) < 0.01:
+                    member[i] = self.mutate(members[i])
+            member = np.array(member)
+            fit = np.array([self.fitness(member) for member in members])
+            pop = Population(members, fit)
 
     # Returns the accuracy for a model
     def fitness(self, genome):
@@ -37,22 +50,37 @@ class Evolutions:
                 validation_data=(self.x_test, self.y_test),
                 nb_epoch=10, batch_size=50, verbose=0)
         scores = model.evaluate(X_test, y_test, verbose=0)
-        return scores[0]
+        return scores[1]
     
-    # Crossover two genomes
     def crossover(self, genome1, genome2):
-        pass
+        #swap the genomes split at the crossover index
+        crossIndexA = rand.randint(0, len(genome1))
+        genome1TempA = genome1[:crossIndexA] + genome2[crossIndexA:]
+        genome2TempA = genome2[:crossIndexA] + genome1[crossIndexA:]
 
-    # Mutate one gene
+        #swap the genomes from the first split, split at the second crossover index
+        crossIndexB = crossIndexA + rand.randint(0, len(genome1) - crossIndexA)
+        genome1TempB = genome1TempA[:crossIndexB] + genome2TempA[crossIndexB:]
+        genome2TempB = genome2TempA[:crossIndexB] + genome1TempA[crossIndexB:]
+
+        return [genome1TempB, genome2TempB][rand.randint(0, 1)]
+    
     def mutate(self, genome):
-        pass
+        mutationIndex = rand.randint(0, len(genome))
+        return self.genome_handler.mutator(genome, mutationIndex)
 
 class Population:
+
+    def __len__(self):
+        return len(self.members)
 
     def __init__(self, members, fitnesses):
         self.members = members
         self.fitnesses = fitnesses
         self.s_fit = sum(self.fitnesses)
+
+    def printStats(self):
+        print "Best Fitness:", max(self.fitnesses)
     
     def select(self):
         dart = rand.randint(0, self.s_fit)
@@ -61,6 +89,3 @@ class Population:
             sum_fits += self.fitnesses[i]
             if sum_fits > dart:
                 return self.members[i]
-
-
-    
