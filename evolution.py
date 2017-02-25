@@ -3,18 +3,6 @@ from keras.models import Sequential
 from keras.layers import Convolution2D, MaxPooling2D, BatchNormalization
 from keras.layers import Dense, Dropout, Activation
 
-
-# Just handles decoding from genome strings into Keras models
-class Genome:
-
-    # Returns a compiled keras model
-    def decode(self, genome):
-        pass
-    
-    # Returns one randomly create genome
-    def generateRandom(self):
-        pass
-
 # Our genetic algorithm.
 # This will contain methods for fitness, crossover, mutation, etc.
 class Evolutions:
