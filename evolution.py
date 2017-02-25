@@ -1,7 +1,5 @@
 import numpy as np
 from keras.models import Sequential
-from keras.layers import Convolution2D, MaxPooling2D, BatchNormalization
-from keras.layers import Dense, Dropout, Activation
 from keras.utils import np_utils
 from keras.datasets import mnist
 from genome_handler import GenomeHandler
@@ -18,8 +16,8 @@ class Evolution:
     def loadMNIST(self):
         (x_train, y_train), (x_test, y_test) = mnist.load_data()
         self.x_train = x_train.reshape(x_train.shape[0], 1, 28, 28).astype('float32') / 255
-        self.y_train = y_train.reshape(y_train.shape[0], 1, 28, 28).astype('float32') / 255
-        self.x_test = np_utils.to_categorical(x_test)
+        self.x_test = x_test.reshape(x_test.shape[0], 1, 28, 28).astype('float32') / 255
+        self.y_train = np_utils.to_categorical(y_train)
         self.y_test = np_utils.to_categorical(y_test)
 
     # Run the whole genetic algorithm
@@ -30,7 +28,8 @@ class Evolution:
         pop = Population(members, fit)
 
         # Evolve over generations
-        for _ in range(num_generations):
+        for i in range(num_generations - 1):
+            print "Population #" + str(i + 2)
             members = []
             for i in range(int(pop_size*0.95)): # Crossover
                 members.append(self.crossover(pop.select(), pop.select()))
@@ -49,7 +48,7 @@ class Evolution:
         model.fit(self.x_train, self.y_train, \
                 validation_data=(self.x_test, self.y_test),
                 nb_epoch=10, batch_size=50, verbose=0)
-        scores = model.evaluate(X_test, y_test, verbose=0)
+        scores = model.evaluate(self.x_test, self.y_test, verbose=0)
         return scores[1]
     
     def crossover(self, genome1, genome2):
@@ -67,7 +66,7 @@ class Evolution:
     
     def mutate(self, genome):
         mutationIndex = rand.randint(0, len(genome))
-        return self.genome_handler.mutator(genome, mutationIndex)
+        return self.genome_handler.mutate(genome, mutationIndex)
 
 class Population:
 
@@ -80,7 +79,9 @@ class Population:
         self.s_fit = sum(self.fitnesses)
 
     def printStats(self):
-        print "Best Fitness:", max(self.fitnesses)
+        print "Best Accuracy:", max(self.fitnesses)
+        print "Average Accuracy:", np.mean(self.fitnesses)
+        print "Standard Deviation:", np.std(self.fitnesses)
     
     def select(self):
         dart = rand.randint(0, self.s_fit)

@@ -1,9 +1,7 @@
-from evolution import Evolutions
-
+from evolution import Evolution
 
 def main():
-    Evolutions().run()
-
+    Evolution().run(40, 100)
 
 if __name__ == '__main__':
     main()
