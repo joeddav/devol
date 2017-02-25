@@ -7,10 +7,6 @@ from keras.layers.normalization import BatchNormalization
 
 class GenomeHandler:
     def __init__(self):
-        self.convolution_layers = 6
-        self.convolution_layer_size = 0
-        self.dense_layers = 3
-        self.dense_layer_size = 0
         self.optimizer = {
             0: 'adam',
             1: 'rmsprop',
@@ -22,6 +18,37 @@ class GenomeHandler:
             0: 'relu',
             1: 'sigmoid',
         }
+        self.convolutional_layer_shape = {
+            # Present
+            0: [0, 1],
+            # Filters
+            1: range(16, 257),
+            # Batch Normalization
+            2: [0, 1],
+            # Activation
+            3: self.activation.keys(),
+            # Dropout
+            4: [i / 20 for i in range(11)],
+            # Max Pooling
+            5: range(3),
+        }
+
+        self.dense_layer_shape = {
+            # Present
+            0: [0, 1],
+            # Number of Nodes
+            1: [2**i for i in range(5, 12)],
+            # Batch Normalization
+            2: [0, 1],
+            # Activation
+            3: self.activation.keys(),
+            # Dropout
+            4: [i / 20 for i in range(11)],
+        }
+        self.convolution_layers = 6
+        self.convolution_layer_size = len(self.convolutional_layer_shape)
+        self.dense_layers = 3
+        self.dense_layer_size = len(self.dense_layer_shape)
 
     def decode(self, genome):
         model = Sequential()
@@ -67,36 +94,10 @@ class GenomeHandler:
     def generate(self):
         genome = np.empty(0)
         for i in range(self.convolution_layers):
-            start_size = len(genome)
-            # Present
-            genome = np.append(genome, np.random.choice([0, 1]))
-            # Filters
-            genome = np.append(genome, np.random.choice(range(16, 257)))
-            # Batch Normalization
-            genome = np.append(genome, np.random.choice([0, 1]))
-            # Activation
-            genome = np.append(
-                        genome, np.random.choice(self.activation.keys()))
-            # Dropout
-            genome = np.append(genome, np.random.uniform(.1, .6))
-            # Max Pooling
-            genome = np.append(genome, np.random.choice(range(3)))
-            self.convolution_layer_size = len(genome) - start_size
+            for j, range in self.convolutional_layer_shape.iteritems():
+                genome = np.append(genome, np.random.choice(range))
         for i in range(self.dense_layers):
-            start_size = len(genome)
-            # Present
-            genome = np.append(genome, np.random.choice([0, 1]))
-            # Number of Nodes
-            genome = np.append(
-                        genome, np.random.choice([2**i for i in range(5, 12)]))
-            # Batch Normalization
-            genome = np.append(genome, np.random.choice([0, 1]))
-            # Activation
-            genome = np.append(
-                        genome, np.random.choice(self.activation.keys()))
-            # Dropout
-            genome = np.append(genome, np.random.uniform(.1, .6))
-            self.dense_layer_size = len(genome) - start_size
-        # Optimizer
+            for j, range in self.dense_layer_shape.iteritems():
+                genome = np.append(genome, np.random.choice(range))
         genome = np.append(genome, np.random.choice(self.optimizer.keys()))
         return genome
