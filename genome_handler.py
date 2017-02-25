@@ -50,6 +50,9 @@ class GenomeHandler:
         self.dense_layers = 3
         self.dense_layer_size = len(self.dense_layer_shape)
 
+    def mutate(self, genome):
+        pass
+
     def decode(self, genome):
         model = Sequential()
         offset = 0
