@@ -47,7 +47,7 @@ class Evolution:
         model = self.genome_handler.decode(genome)
         model.fit(self.x_train, self.y_train, \
                 validation_data=(self.x_test, self.y_test),
-                nb_epoch=10, batch_size=50, verbose=0)
+                nb_epoch=10, batch_size=50, verbose=1)
         scores = model.evaluate(self.x_test, self.y_test, verbose=0)
         return 1 / scores[0]
     
@@ -65,8 +65,7 @@ class Evolution:
         return [genome1TempB, genome2TempB][rand.randint(0, 1)]
     
     def mutate(self, genome):
-        mutationIndex = rand.randint(0, len(genome))
-        return self.genome_handler.mutate(genome, mutationIndex)
+        return self.genome_handler.mutate(genome)
 
 class Population:
 

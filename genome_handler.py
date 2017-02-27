@@ -76,13 +76,16 @@ class GenomeHandler:
     def decode(self, genome):
         model = Sequential()
         offset = 0
+        input_layer = True
         for i in range(self.convolution_layers):
             if genome[offset]:
-                if i == 0:
+                convolution = None
+                if input_layer:
                     convolution = Convolution2D(
                                         genome[offset + 1], 3, 3,
                                         border_mode='same',
                                         input_shape=(1, 28, 28))
+                    input_layer = False
                 else:
                     convolution = Convolution2D(
                                         genome[offset + 1], 3, 3,
@@ -94,9 +97,9 @@ class GenomeHandler:
                 model.add(Dropout(genome[offset + 4]))
                 max_pooling_type = genome[offset + 5]
                 if max_pooling_type == 1:
-                    model.add(MaxPooling2D(pool_size=(2, 2)))
+                    model.add(MaxPooling2D(pool_size=(2, 2), border_mode="same"))
                 elif max_pooling_type == 2:
-                    model.add(MaxPooling2D(pool_size=(3, 3), strides=(2, 2)))
+                    model.add(MaxPooling2D(pool_size=(3, 3), border_mode="same", strides=(2, 2)))
             offset += self.convolution_layer_size
 
         model.add(Flatten())
@@ -116,13 +119,13 @@ class GenomeHandler:
         return model
 
     def generate(self):
-        genome = np.empty(0)
+        genome = []
         for i in range(self.convolution_layers):
-            for j, range in self.convolutional_layer_shape.iteritems():
-                genome = np.append(genome, np.random.choice(range))
+            for j, r in self.convolutional_layer_shape.iteritems():
+                genome.append(np.random.choice(r))
         for i in range(self.dense_layers):
-            for j, range in self.dense_layer_shape.iteritems():
-                genome = np.append(genome, np.random.choice(range))
-        genome = np.append(genome, np.random.choice(self.optimizer.keys()))
+            for j, r in self.dense_layer_shape.iteritems():
+                genome.append(np.random.choice(r))
+        genome.append(np.random.choice(self.optimizer.keys()))
         genome[0] = 1
         return genome
