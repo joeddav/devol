@@ -60,7 +60,7 @@ class GenomeHandler:
                     genome[index] = np.random.choice(choice_range)
                     break
             elif index != len(genome) - 1:
-                offset = self.convolution_layers * self.convolution_layers
+                offset = self.convolution_layer_size * self.convolution_layers
                 new_index = (index - offset)
                 present_index = new_index - new_index % self.dense_layer_size
                 if genome[present_index + offset]:
