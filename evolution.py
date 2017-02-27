@@ -15,6 +15,14 @@ class Evolution:
 
     def loadMNIST(self):
         (x_train, y_train), (x_test, y_test) = mnist.load_data()
+        seed = 7
+        numpy.random.seed(seed)
+        train_indexes = numpy.random.choice(range(60000), size = 400, replace = False)
+        test_indexes = numpy.random.choice(range(10000), size = 80, replace = False)
+        x_train = x_train[train_indexes]
+        y_train = y_train[train_indexes]
+        x_test = x_test[test_indexes]
+        y_test = y_test[test_indexes]
         self.x_train = x_train.reshape(x_train.shape[0], 1, 28, 28).astype('float32') / 255
         self.x_test = x_test.reshape(x_test.shape[0], 1, 28, 28).astype('float32') / 255
         self.y_train = np_utils.to_categorical(y_train)
