@@ -51,7 +51,27 @@ class GenomeHandler:
         self.dense_layer_size = len(self.dense_layer_shape)
 
     def mutate(self, genome):
-        pass
+        while True:
+            index = np.random.choice(range(1, len(genome)))
+            if index < self.convolution_layer_size * self.convolution_layers:
+                if genome[index - index % self.convolution_layer_size]:
+                    range_index = index % self.convolution_layer_size
+                    choice_range = self.convolutional_layer_shape[range_index]
+                    genome[index] = np.random.choice(choice_range)
+                    break
+            elif index != len(genome) - 1:
+                offset = self.convolution_layers * self.convolution_layers
+                new_index = (index - offset)
+                present_index = new_index - new_index % self.dense_layer_size
+                if genome[present_index + offset]:
+                    range_index = new_index % self.dense_layer_size
+                    choice_range = self.dense_layer_shape[range_index]
+                    genome[index] = np.random.choice(choice_range)
+                    break
+            else:
+                genome[index] = np.random.choice(self.optimizer.keys())
+                break
+        return genome
 
     def decode(self, genome):
         model = Sequential()
@@ -89,6 +109,7 @@ class GenomeHandler:
             model.add(Activation(self.activation[genome[offset + 3]]))
             model.add(Dropout(genome[offset + 4]))
 
+        model.add(Dense(10, activation='softmax'))
         model.compile(loss='categorical_crossentropy',
                       optimizer=self.optimizer[genome[offset]],
                       metrics=['accuracy'])
@@ -103,4 +124,5 @@ class GenomeHandler:
             for j, range in self.dense_layer_shape.iteritems():
                 genome = np.append(genome, np.random.choice(range))
         genome = np.append(genome, np.random.choice(self.optimizer.keys()))
+        genome[0] = 1
         return genome
