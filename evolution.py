@@ -20,7 +20,7 @@ class Evolution:
         self.y_train = np_utils.to_categorical(y_train)
         self.y_test = np_utils.to_categorical(y_test)
 
-    # Run the whole genetic algorithm
+    # Create a population and evolve
     def run(self, num_generations, pop_size):
         # Generate initial random population
         members = np.array([self.genome_handler.generate() for _ in range(pop_size)])
@@ -42,14 +42,14 @@ class Evolution:
             fit = np.array([self.fitness(member) for member in members])
             pop = Population(members, fit)
 
-    # Returns the accuracy for a model
+    # Returns the accuracy for a model as 1 / loss
     def fitness(self, genome):
         model = self.genome_handler.decode(genome)
         model.fit(self.x_train, self.y_train, \
                 validation_data=(self.x_test, self.y_test),
                 nb_epoch=10, batch_size=50, verbose=0)
         scores = model.evaluate(self.x_test, self.y_test, verbose=0)
-        return scores[1]
+        return 1 / scores[0]
     
     def crossover(self, genome1, genome2):
         #swap the genomes split at the crossover index
@@ -77,6 +77,7 @@ class Population:
         self.members = members
         self.fitnesses = fitnesses
         self.s_fit = sum(self.fitnesses)
+        self.printStats()
 
     def printStats(self):
         print "Best Accuracy:", max(self.fitnesses)
