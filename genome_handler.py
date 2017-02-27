@@ -98,8 +98,6 @@ class GenomeHandler:
                 max_pooling_type = genome[offset + 5]
                 if max_pooling_type == 1:
                     model.add(MaxPooling2D(pool_size=(2, 2), border_mode="same"))
-                elif max_pooling_type == 2:
-                    model.add(MaxPooling2D(pool_size=(3, 3), border_mode="same", strides=(2, 2)))
             offset += self.convolution_layer_size
 
         model.add(Flatten())
