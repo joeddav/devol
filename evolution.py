@@ -12,12 +12,13 @@ class Evolution:
     def __init__(self):
         self.genome_handler = GenomeHandler()
         self.loadMNIST()
+        self.bssf = (0, None)
 
     def loadMNIST(self):
         (x_train, y_train), (x_test, y_test) = mnist.load_data()
-        self.x_train = x_train.reshape(x_train.shape[0], 1, 28, 28).astype('float32') / 255
+        self.x_train = x_train.reshape(x_train.shape[0], 1, 28, 28).astype('float32')[:1000] / 255
         self.x_test = x_test.reshape(x_test.shape[0], 1, 28, 28).astype('float32') / 255
-        self.y_train = np_utils.to_categorical(y_train)
+        self.y_train = np_utils.to_categorical(y_train[:1000])
         self.y_test = np_utils.to_categorical(y_test)
 
     # Create a population and evolve
@@ -25,11 +26,11 @@ class Evolution:
         # Generate initial random population
         members = np.array([self.genome_handler.generate() for _ in range(pop_size)])
         fit = np.array([self.fitness(member) for member in members])
+        print "Population #1"
         pop = Population(members, fit)
 
         # Evolve over generations
         for i in range(1, num_generations):
-            print "Population #" + str(i + 1)
             members = []
             for i in range(int(pop_size*0.95)): # Crossover
                 members.append(self.crossover(pop.select(), pop.select()))
@@ -40,16 +41,30 @@ class Evolution:
                     members[i] = self.mutate(members[i])
             member = np.array(member)
             fit = np.array([self.fitness(member) for member in members])
+            print "Population #" + str(i + 1)
             pop = Population(members, fit)
+
+        # persist the best model
+        self.bssf[1].save("keras_model")
 
     # Returns the accuracy for a model as 1 / loss
     def fitness(self, genome):
         model = self.genome_handler.decode(genome)
-        model.fit(self.x_train, self.y_train, \
-                validation_data=(self.x_test, self.y_test),
-                nb_epoch=1, batch_size=200, verbose=1)
-        scores = model.evaluate(self.x_test, self.y_test, verbose=0)
-        return 1 / scores[0]
+        scores = None
+        try:
+            model.fit(self.x_train, self.y_train, \
+                    validation_data=(self.x_test, self.y_test),
+                    nb_epoch=10, batch_size=200, verbose=0)
+            scores = model.evaluate(self.x_test, self.y_test, verbose=0)
+        except: # this is a temporary fix - we need a better way to do this
+            scores = 0.001,
+        fitness = 1 / scores[0]
+
+        # keep the best fit model as we go
+        if fitness > self.bssf[0]:
+            self.bssf = (fitness, model)
+
+        return fitness
     
     def crossover(self, genome1, genome2):
         genome1 = genome1.tolist()
@@ -81,9 +96,9 @@ class Population:
         self.printStats()
 
     def printStats(self):
-        print "Best Accuracy:", max(self.fitnesses)
-        print "Average Accuracy:", np.mean(self.fitnesses)
-        print "Standard Deviation:", np.std(self.fitnesses)
+        print "Best Fitness:", max(self.fitnesses)
+        print "Average Fitness:", np.mean(self.fitnesses)
+        print "Standard Deviation Fitness:", np.std(self.fitnesses)
     
     def select(self):
         dart = rand.uniform(0, self.s_fit)
