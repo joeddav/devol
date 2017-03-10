@@ -12,13 +12,13 @@ class Evolution:
     def __init__(self):
         self.genome_handler = GenomeHandler()
         self.loadMNIST()
-        self.bssf = (0, None)
+        self.bssf = (0, None, 0) # fitness (1/loss), model, accuracy
 
     def loadMNIST(self):
         (x_train, y_train), (x_test, y_test) = mnist.load_data()
-        self.x_train = x_train.reshape(x_train.shape[0], 1, 28, 28).astype('float32')[:1000] / 255
+        self.x_train = x_train.reshape(x_train.shape[0], 1, 28, 28).astype('float32') / 255
         self.x_test = x_test.reshape(x_test.shape[0], 1, 28, 28).astype('float32') / 255
-        self.y_train = np_utils.to_categorical(y_train[:1000])
+        self.y_train = np_utils.to_categorical(y_train)
         self.y_test = np_utils.to_categorical(y_test)
 
     # Create a population and evolve
@@ -50,19 +50,20 @@ class Evolution:
     # Returns the accuracy for a model as 1 / loss
     def fitness(self, genome):
         model = self.genome_handler.decode(genome)
-        scores = None
+        loss, accuracy = None, None
         try:
             model.fit(self.x_train, self.y_train, \
                     validation_data=(self.x_test, self.y_test),
                     nb_epoch=10, batch_size=200, verbose=0)
-            scores = model.evaluate(self.x_test, self.y_test, verbose=0)
-        except: # this is a temporary fix - we need a better way to do this
-            scores = 0.001,
-        fitness = 1 / scores[0]
+            loss, accuracy = model.evaluate(self.x_test, self.y_test, verbose=0)
+        except: # this is a temporary fix addressing models that train (b.c. too many max poolings, etc.)
+            loss = 1
+            accuracy = 0
+        fitness = 1 / loss
 
         # keep the best fit model as we go
         if fitness > self.bssf[0]:
-            self.bssf = (fitness, model)
+            self.bssf = (fitness, model, accuracy)
 
         return fitness
     
