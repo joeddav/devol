@@ -54,7 +54,7 @@ class Evolution:
         try:
             model.fit(self.x_train, self.y_train, \
                     validation_data=(self.x_test, self.y_test),
-                    nb_epoch=10, batch_size=200, verbose=0)
+                    nb_epoch=10, batch_size=200, verbose=1)
             loss, accuracy = model.evaluate(self.x_test, self.y_test, verbose=0)
         except: # this is a temporary fix addressing models that train (b.c. too many max poolings, etc.)
             loss = 1

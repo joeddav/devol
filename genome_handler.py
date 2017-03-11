@@ -1,4 +1,5 @@
 import numpy as np
+import random as rand
 from keras.models import Sequential
 from keras.layers import Activation, Dense, Dropout, Flatten
 from keras.layers.convolutional import Convolution2D, MaxPooling2D
@@ -11,8 +12,7 @@ class GenomeHandler:
             0: 'adam',
             1: 'rmsprop',
             2: 'adagrad',
-            3: 'delta',
-            4: 'nag',
+            3: 'adadelta'
         }
         self.activation = {
             0: 'relu',
@@ -22,7 +22,7 @@ class GenomeHandler:
             # Present
             0: [0, 1],
             # Filters
-            1: range(16, 257),
+            1: [2**i for i in range(3, 8)],
             # Batch Normalization
             2: [0, 1],
             # Activation
@@ -37,7 +37,7 @@ class GenomeHandler:
             # Present
             0: [0, 1],
             # Number of Nodes
-            1: [2**i for i in range(5, 12)],
+            1: [2**i for i in range(4, 11)],
             # Batch Normalization
             2: [0, 1],
             # Activation
@@ -80,6 +80,7 @@ class GenomeHandler:
         for i in range(self.convolution_layers):
             if genome[offset]:
                 convolution = None
+                print "num maps:", genome[offset + 1]
                 if input_layer:
                     convolution = Convolution2D(
                                         genome[offset + 1], 3, 3,
@@ -102,13 +103,15 @@ class GenomeHandler:
 
         model.add(Flatten())
 
-        for i in range(self.dense_layer_size):
+        for i in range(self.dense_layers):
             if genome[offset]:
+                print "dense nodes:", genome[offset + 1]
                 model.add(Dense(genome[offset + 1]))
-            if genome[offset + 2]:
-                model.add(BatchNormalization())
-            model.add(Activation(self.activation[genome[offset + 3]]))
-            model.add(Dropout(genome[offset + 4]))
+                if genome[offset + 2]:
+                    model.add(BatchNormalization())
+                model.add(Activation(self.activation[genome[offset + 3]]))
+                model.add(Dropout(genome[offset + 4]))
+            offset += self.dense_layer_size
 
         model.add(Dense(10, activation='softmax'))
         model.compile(loss='categorical_crossentropy',
