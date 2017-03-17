@@ -28,7 +28,7 @@ class GenomeHandler:
             # Activation
             3: self.activation.keys(),
             # Dropout
-            4: [i / 20.0 for i in range(11)],
+            4: [i for i in range(11)],
             # Max Pooling
             5: range(3),
         }
@@ -43,7 +43,7 @@ class GenomeHandler:
             # Activation
             3: self.activation.keys(),
             # Dropout
-            4: [i / 20.0 for i in range(11)],
+            4: [i for i in range(11)],
         }
         self.convolution_layers = 6
         self.convolution_layer_size = len(self.convolutional_layer_shape)
@@ -80,7 +80,7 @@ class GenomeHandler:
         for i in range(self.convolution_layers):
             if genome[offset]:
                 convolution = None
-                print "num maps:", genome[offset + 1]
+                #print "num maps:", genome[offset + 1]
                 if input_layer:
                     convolution = Convolution2D(
                                         genome[offset + 1], 3, 3,
@@ -95,7 +95,7 @@ class GenomeHandler:
                 if genome[offset + 2]:
                     model.add(BatchNormalization())
                 model.add(Activation(self.activation[genome[offset + 3]]))
-                model.add(Dropout(genome[offset + 4]))
+                model.add(Dropout(genome[offset + 4] / 20.0))
                 max_pooling_type = genome[offset + 5]
                 if max_pooling_type == 1:
                     model.add(MaxPooling2D(pool_size=(2, 2), border_mode="same"))
@@ -105,12 +105,12 @@ class GenomeHandler:
 
         for i in range(self.dense_layers):
             if genome[offset]:
-                print "dense nodes:", genome[offset + 1]
+                #print "dense nodes:", genome[offset + 1]
                 model.add(Dense(genome[offset + 1]))
                 if genome[offset + 2]:
                     model.add(BatchNormalization())
                 model.add(Activation(self.activation[genome[offset + 3]]))
-                model.add(Dropout(genome[offset + 4]))
+                model.add(Dropout(genome[offset + 4] / 20.0))
             offset += self.dense_layer_size
 
         model.add(Dense(10, activation='softmax'))

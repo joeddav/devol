@@ -3,6 +3,7 @@ from keras.models import Sequential
 from keras.utils import np_utils
 from keras.datasets import mnist
 from genome_handler import GenomeHandler
+from keras.callbacks import EarlyStopping
 import random as rand
 
 # Our genetic algorithm.
@@ -24,10 +25,12 @@ class Evolution:
     # Create a population and evolve
     def run(self, num_generations, pop_size):
         # Generate initial random population
+        epochs = 10
         members = np.array([self.genome_handler.generate() for _ in range(pop_size)])
-        fit = np.array([self.fitness(member) for member in members])
+        fit = np.array([self.fitness(member, epochs) for member in members])
         print "Population #1"
         pop = Population(members, fit)
+        epochs -= 1
 
         # Evolve over generations
         for i in range(1, num_generations):
@@ -40,21 +43,24 @@ class Evolution:
                 if rand.uniform(0, 1) < 0.01:
                     members[i] = self.mutate(members[i])
             member = np.array(member)
-            fit = np.array([self.fitness(member) for member in members])
+            fit = np.array([self.fitness(member, epochs) for member in members])
             print "Population #" + str(i + 1)
             pop = Population(members, fit)
+            epochs -= 1
+            epochs = epochs if epochs >= 3 else 3
 
         # persist the best model
         self.bssf[1].save("keras_model")
 
     # Returns the accuracy for a model as 1 / loss
-    def fitness(self, genome):
+    def fitness(self, genome, epochs):
         model = self.genome_handler.decode(genome)
         loss, accuracy = None, None
         try:
             model.fit(self.x_train, self.y_train, \
                     validation_data=(self.x_test, self.y_test),
-                    nb_epoch=10, batch_size=200, verbose=1)
+                    nb_epoch=epochs, batch_size=200, verbose=1,
+                    callbacks=[EarlyStopping(monitor='val_loss', patience=2, verbose=0)])
             loss, accuracy = model.evaluate(self.x_test, self.y_test, verbose=0)
         except: # this is a temporary fix addressing models that train (b.c. too many max poolings, etc.)
             loss = 1
