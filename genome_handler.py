@@ -28,7 +28,7 @@ class GenomeHandler:
             # Activation
             3: self.activation.keys(),
             # Dropout
-            4: [i / 20 for i in range(11)],
+            4: [i / 20.0 for i in range(11)],
             # Max Pooling
             5: range(3),
         }
@@ -43,7 +43,7 @@ class GenomeHandler:
             # Activation
             3: self.activation.keys(),
             # Dropout
-            4: [i / 20 for i in range(11)],
+            4: [i / 20.0 for i in range(11)],
         }
         self.convolution_layers = 6
         self.convolution_layer_size = len(self.convolutional_layer_shape)
