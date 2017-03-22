@@ -5,6 +5,7 @@ from keras.datasets import mnist
 from genome_handler import GenomeHandler
 from keras.callbacks import EarlyStopping
 import random as rand
+import csv
 
 # Our genetic algorithm.
 # This will contain methods for fitness, crossover, mutation, etc.
@@ -14,6 +15,8 @@ class Evolution:
         self.genome_handler = GenomeHandler()
         self.loadMNIST()
         self.bssf = (0, None, 0) # fitness (1/loss), model, accuracy
+        self.datafile = 'data/' + str(rand.randint(10000, 99999)) + '.csv'
+        self.data = []
 
     def loadMNIST(self):
         (x_train, y_train), (x_test, y_test) = mnist.load_data()
@@ -28,7 +31,6 @@ class Evolution:
         epochs = 10
         members = np.array([self.genome_handler.generate() for _ in range(pop_size)])
         fit = np.array([self.fitness(member, epochs) for member in members])
-        print "Population #1"
         pop = Population(members, fit)
         epochs -= 1
 
@@ -44,7 +46,6 @@ class Evolution:
                     members[i] = self.mutate(members[i])
             member = np.array(member)
             fit = np.array([self.fitness(member, epochs) for member in members])
-            print "Population #" + str(i + 1)
             pop = Population(members, fit)
             epochs -= 1
             epochs = epochs if epochs >= 3 else 3
@@ -59,13 +60,19 @@ class Evolution:
         try:
             model.fit(self.x_train, self.y_train, \
                     validation_data=(self.x_test, self.y_test),
-                    nb_epoch=epochs, batch_size=200, verbose=1,
+                    nb_epoch=epochs, batch_size=200, verbose=0,
                     callbacks=[EarlyStopping(monitor='val_loss', patience=2, verbose=0)])
             loss, accuracy = model.evaluate(self.x_test, self.y_test, verbose=0)
         except: # this is a temporary fix addressing models that train (b.c. too many max poolings, etc.)
             loss = 1
             accuracy = 0
         fitness = 1 / loss
+                
+        # Record the stats
+        with open(self.datafile, 'a') as csvfile:
+            writer = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            row = list(genome) + [loss, accuracy]
+            writer.writerow(row)  
 
         # keep the best fit model as we go
         if fitness > self.bssf[0]:

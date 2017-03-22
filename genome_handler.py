@@ -80,7 +80,6 @@ class GenomeHandler:
         for i in range(self.convolution_layers):
             if genome[offset]:
                 convolution = None
-                #print "num maps:", genome[offset + 1]
                 if input_layer:
                     convolution = Convolution2D(
                                         genome[offset + 1], 3, 3,
@@ -95,7 +94,7 @@ class GenomeHandler:
                 if genome[offset + 2]:
                     model.add(BatchNormalization())
                 model.add(Activation(self.activation[genome[offset + 3]]))
-                model.add(Dropout(genome[offset + 4] / 20.0))
+                model.add(Dropout(0.5))
                 max_pooling_type = genome[offset + 5]
                 if max_pooling_type == 1:
                     model.add(MaxPooling2D(pool_size=(2, 2), border_mode="same"))
@@ -105,12 +104,11 @@ class GenomeHandler:
 
         for i in range(self.dense_layers):
             if genome[offset]:
-                #print "dense nodes:", genome[offset + 1]
                 model.add(Dense(genome[offset + 1]))
                 if genome[offset + 2]:
                     model.add(BatchNormalization())
                 model.add(Activation(self.activation[genome[offset + 3]]))
-                model.add(Dropout(genome[offset + 4] / 20.0))
+                model.add(Dropout(0.5))
             offset += self.dense_layer_size
 
         model.add(Dense(10, activation='softmax'))
