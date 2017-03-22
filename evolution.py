@@ -85,15 +85,9 @@ class Evolution:
         genome2 = genome2.tolist()
         #swap the genomes split at the crossover index
         crossIndexA = rand.randint(0, len(genome1))
-        genome1TempA = genome1[:crossIndexA] + genome2[crossIndexA:]
-        genome2TempA = genome2[:crossIndexA] + genome1[crossIndexA:]
-
-        #swap the genomes from the first split, split at the second crossover index
-        crossIndexB = crossIndexA + rand.randint(0, len(genome1) - crossIndexA)
-        genome1TempB = genome1TempA[:crossIndexB] + genome2TempA[crossIndexB:]
-        genome2TempB = genome2TempA[:crossIndexB] + genome1TempA[crossIndexB:]
-
-        return np.array([genome1TempB, genome2TempB][rand.randint(0, 1)])
+        child = genome1[:crossIndexA] + genome2[crossIndexA:]
+        
+        return np.array(child)
     
     def mutate(self, genome):
         return self.genome_handler.mutate(genome)
