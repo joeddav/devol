@@ -82,22 +82,22 @@ class GenomeHandler:
                 convolution = None
                 if input_layer:
                     convolution = Convolution2D(
-                                        genome[offset + 1], 3, 3,
-                                        border_mode='same',
+                                        genome[offset + 1], (3, 3),
+                                        padding='same',
                                         input_shape=(1, 28, 28))
                     input_layer = False
                 else:
                     convolution = Convolution2D(
-                                        genome[offset + 1], 3, 3,
-                                        border_mode='same')
+                                        genome[offset + 1], (3, 3),
+                                        padding='same')
                 model.add(convolution)
                 if genome[offset + 2]:
                     model.add(BatchNormalization())
                 model.add(Activation(self.activation[genome[offset + 3]]))
-                model.add(Dropout(0.5))
+                model.add(Dropout(float(genome[offset + 4] / 20.0)))
                 max_pooling_type = genome[offset + 5]
                 if max_pooling_type == 1:
-                    model.add(MaxPooling2D(pool_size=(2, 2), border_mode="same"))
+                    model.add(MaxPooling2D(pool_size=(2, 2), padding="same"))
             offset += self.convolution_layer_size
 
         model.add(Flatten())
@@ -108,13 +108,13 @@ class GenomeHandler:
                 if genome[offset + 2]:
                     model.add(BatchNormalization())
                 model.add(Activation(self.activation[genome[offset + 3]]))
-                model.add(Dropout(0.5))
+                model.add(Dropout(float(genome[offset + 4] / 20.0)))
             offset += self.dense_layer_size
 
         model.add(Dense(10, activation='softmax'))
         model.compile(loss='categorical_crossentropy',
-                      optimizer=self.optimizer[genome[offset]],
-                      metrics=['accuracy'])
+                      optimizer=self.optimizer[genome[offset]], 
+		      metrics=["accuracy"])
         return model
 
     def generate(self):
