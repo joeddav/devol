@@ -39,8 +39,9 @@ class Evolution:
             members = []
             for i in range(int(pop_size*0.95)): # Crossover
                 members.append(self.crossover(pop.select(), pop.select()))
-            for i in range(int(pop_size*0.95), pop_size): # Carryover
-                members.append(pop.select())
+            sorted_fit = sorted(fit, reverse = True)
+            for i in range(pop_size - int(pop_size*0.95)):
+                members.append(self.members[fit.index(sorted_fit[i])])
             for i in range(len(members)): # Mutation
                 if rand.uniform(0, 1) < 0.01:
                     members[i] = self.mutate(members[i])
