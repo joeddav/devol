@@ -51,14 +51,14 @@ class GenomeHandler:
         self.dense_layer_size = len(self.dense_layer_shape)
 
     def mutate(self, genome):
-        while True:
+        num_mutations = np.random.choice(range(3))
+        for i in range(num_mutations):
             index = np.random.choice(range(1, len(genome)))
             if index < self.convolution_layer_size * self.convolution_layers:
                 if genome[index - index % self.convolution_layer_size]:
                     range_index = index % self.convolution_layer_size
                     choice_range = self.convolutional_layer_shape[range_index]
                     genome[index] = np.random.choice(choice_range)
-                    break
             elif index != len(genome) - 1:
                 offset = self.convolution_layer_size * self.convolution_layers
                 new_index = (index - offset)
@@ -67,10 +67,8 @@ class GenomeHandler:
                     range_index = new_index % self.dense_layer_size
                     choice_range = self.dense_layer_shape[range_index]
                     genome[index] = np.random.choice(choice_range)
-                    break
             else:
-                genome[index] = np.random.choice(self.optimizer.keys())
-                break
+                genome[index] = np.random.choice(self.optimizer.keys()) 
         return genome
 
     def decode(self, genome):
