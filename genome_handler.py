@@ -5,7 +5,6 @@ from keras.layers import Activation, Dense, Dropout, Flatten
 from keras.layers.convolutional import Convolution2D, MaxPooling2D
 from keras.layers.normalization import BatchNormalization
 
-
 class GenomeHandler:
     def __init__(self):
         self.optimizer = {
@@ -111,7 +110,7 @@ class GenomeHandler:
 
         model.add(Dense(10, activation='softmax'))
         model.compile(loss='categorical_crossentropy',
-                      optimizer=self.optimizer[genome[offset]], 
+		      optimizer=self.optimizer[genome[offset]],
 		      metrics=["accuracy"])
         return model
 

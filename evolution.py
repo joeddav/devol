@@ -2,10 +2,11 @@ from datetime import datetime
 import numpy as np
 from keras.models import Sequential
 from keras.utils import np_utils
-from keras.datasets import mnist
+from keras.datasets import mnist, cifar10
 from genome_handler import GenomeHandler
 from keras.callbacks import EarlyStopping
 import random as rand
+import math
 import csv
 
 # Our genetic algorithm.
@@ -14,50 +15,49 @@ class Evolution:
 
     def __init__(self):
         self.genome_handler = GenomeHandler()
-        self.loadMNIST()
-        self.bssf = (0, None, 0) # fitness (1/loss), model, accuracy
+	(self.x_train, self.y_train), (self.x_test, self.y_test) = mnist.load_data()
+	self.process_dataset()
         self.datafile = 'data/' + datetime.now().ctime()  + '.csv'
 	print "model and accuracy data stored at", self.datafile
         self.data = []
 
-    def loadMNIST(self):
-        (x_train, y_train), (x_test, y_test) = mnist.load_data()
-        self.x_train = x_train.reshape(x_train.shape[0], 1, 28, 28).astype('float32') / 255
-        self.x_test = x_test.reshape(x_test.shape[0], 1, 28, 28).astype('float32') / 255
-        self.y_train = np_utils.to_categorical(y_train)
-        self.y_test = np_utils.to_categorical(y_test)
-
+    def process_dataset(self):
+        self.x_train = self.x_train.reshape(self.x_train.shape[0], 1, 28, 28).astype("float32") / 255
+        self.x_test = self.x_test.reshape(self.x_test.shape[0], 1, 28, 28).astype('float32') / 255
+        self.y_train = np_utils.to_categorical(self.y_train)
+        self.y_test = np_utils.to_categorical(self.y_test)
+		
     # Create a population and evolve
     def run(self, num_generations, pop_size):
         # Generate initial random population
-        epochs = 10
+        epochs = 5
         members = np.array([self.genome_handler.generate() for _ in range(pop_size)])
-        fit = np.array([self.fitness(member, epochs) for member in members])
+        fit = np.array(self.fitnesses(members, epochs))
         pop = Population(members, fit)
-        epochs -= 1
+        #epochs -= 1
 
         # Evolve over generations
         for i in range(1, num_generations):
             members = []
             for i in range(int(pop_size*0.95)): # Crossover
                 members.append(self.crossover(pop.select(), pop.select()))
-            sorted_fit = sorted(fit, reverse = True)
-            for i in range(pop_size - int(pop_size*0.95)):
-                members.append(self.members[fit.index(sorted_fit[i])])
+	    members += pop.getBest(pop_size - int(pop_size*0.95))
             for i in range(len(members)): # Mutation
-                if rand.uniform(0, 1) < 0.01:
-                    members[i] = self.mutate(members[i])
-            member = np.array(member)
-            fit = np.array([self.fitness(member, epochs) for member in members])
+	        members[i] = self.mutate(members[i])
+            fit = np.array(self.fitnesses(members, epochs))
+	    members = np.array(members)
             pop = Population(members, fit)
-            epochs -= 1
-            epochs = epochs if epochs >= 3 else 3
+            #epochs -= 1
+            #epochs = epochs if epochs >= 3 else 3
 
-        # persist the best model
-        self.bssf[1].save("keras_model")
+    def fitnesses(self, genomes, epochs):
+	accuracies = [self.evaluate(x, epochs)[1] for x in genomes]	
+	accuracies -= min(accuracies)
+	accuracies /= max(accuracies)
+	return map(lambda x: math.exp(x), accuracies)
 
     # Returns the accuracy for a model as 1 / loss
-    def fitness(self, genome, epochs):
+    def evaluate(self, genome, epochs):
         model = self.genome_handler.decode(genome)
         loss, accuracy = None, None
 	model.fit(self.x_train, self.y_train, \
@@ -65,20 +65,14 @@ class Evolution:
 		epochs=epochs, batch_size=200, verbose=1,
 		callbacks=[EarlyStopping(monitor='val_loss', patience=2, verbose=1)])
 	loss, accuracy = model.evaluate(self.x_test, self.y_test, verbose=0)
-	
-        fitness = 1 / loss
-                
+
         # Record the stats
         with open(self.datafile, 'a') as csvfile:
             writer = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             row = list(genome) + [loss, accuracy]
             writer.writerow(row)  
 
-        # keep the best fit model as we go
-        if fitness > self.bssf[0]:
-            self.bssf = (fitness, model, accuracy)
-
-        return fitness
+        return loss, accuracy
     
     def crossover(self, genome1, genome2):
         genome1 = genome1.tolist()
@@ -101,13 +95,13 @@ class Population:
         self.members = members
         self.fitnesses = fitnesses
         self.s_fit = sum(self.fitnesses)
-        self.printStats()
 
-    def printStats(self):
-        print "Best Fitness:", max(self.fitnesses)
-        print "Average Fitness:", np.mean(self.fitnesses)
-        print "Standard Deviation Fitness:", np.std(self.fitnesses)
-    
+    def getBest(self, n):
+	combined = [(self.members[i], self.fitnesses[i]) \
+			for i in range(len(self.members))]
+	sorted(combined, key=(lambda x: x[1]), reverse=True)
+	return map(lambda x: x[0], combined[:n])
+
     def select(self):
         dart = rand.uniform(0, self.s_fit)
         sum_fits = 0
