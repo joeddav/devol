@@ -32,7 +32,9 @@ class Evolution:
         # Generate initial random population
         epochs = 5
         members = np.array([self.genome_handler.generate() for _ in range(pop_size)])
-        fit = np.array(self.fitnesses(members, epochs))
+        #with open("best_50.csv") as f:
+		#members = np.array([line.split() for line in f])
+	fit = np.array(self.fitnesses(members, epochs))
         pop = Population(members, fit)
         #epochs -= 1
 
