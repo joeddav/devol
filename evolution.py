@@ -27,13 +27,19 @@ class Evolution:
         self.y_train = np_utils.to_categorical(self.y_train)
         self.y_test = np_utils.to_categorical(self.y_test)
 		
+    def fix_line(self, line):
+        split_line = line.strip().split(',')
+        for i in range(len(split_line)):
+            split_line[i] = int(split_line[i])
+        return(split_line)
+
     # Create a population and evolve
     def run(self, num_generations, pop_size):
         # Generate initial random population
-        epochs = 5
-        members = np.array([self.genome_handler.generate() for _ in range(pop_size)])
-        #with open("best_50.csv") as f:
-		#members = np.array([line.split() for line in f])
+        epochs = 10 
+        #members = np.array([self.genome_handler.generate() for _ in range(pop_size)])
+        with open("best_50.csv") as f:
+		members = np.array([self.fix_line(line) for line in f])
 	fit = np.array(self.fitnesses(members, epochs))
         pop = Population(members, fit)
         #epochs -= 1
@@ -56,7 +62,10 @@ class Evolution:
 	accuracies = [self.evaluate(x, epochs)[1] for x in genomes]	
 	accuracies -= min(accuracies)
 	accuracies /= max(accuracies)
-	return map(lambda x: math.exp(x), accuracies)
+	return map(lambda x: self.fitness(x), accuracies)
+
+    def fitness(self, val):
+	return (val * 100) ** 4
 
     # Returns the accuracy for a model as 1 / loss
     def evaluate(self, genome, epochs):
