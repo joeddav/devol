@@ -37,21 +37,21 @@ class Evolution:
     def run(self, num_generations, pop_size):
         # Generate initial random population
         epochs = 10 
-        #members = np.array([self.genome_handler.generate() for _ in range(pop_size)])
-        with open("best_50.csv") as f:
-		members = np.array([self.fix_line(line) for line in f])
+        members = np.array([self.genome_handler.generate() for _ in range(pop_size)])
+        #with open("best_50.csv") as f:
+	#	members = np.array([self.fix_line(line) for line in f])
 	fit = np.array(self.fitnesses(members, epochs))
         pop = Population(members, fit)
         #epochs -= 1
 
         # Evolve over generations
-        for i in range(1, num_generations):
+        for gen in range(1, num_generations):
             members = []
             for i in range(int(pop_size*0.95)): # Crossover
                 members.append(self.crossover(pop.select(), pop.select()))
 	    members += pop.getBest(pop_size - int(pop_size*0.95))
             for i in range(len(members)): # Mutation
-	        members[i] = self.mutate(members[i])
+	        members[i] = self.mutate(members[i], gen)
             fit = np.array(self.fitnesses(members, epochs))
 	    members = np.array(members)
             pop = Population(members, fit)
@@ -94,8 +94,9 @@ class Evolution:
         
         return np.array(child)
     
-    def mutate(self, genome):
-        return self.genome_handler.mutate(genome)
+    def mutate(self, genome, generation):
+	num_mutations = max(3, generation / 2)
+        return self.genome_handler.mutate(genome, num_mutations)
 
 class Population:
 

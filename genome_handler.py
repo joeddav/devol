@@ -49,8 +49,8 @@ class GenomeHandler:
         self.dense_layers = 3
         self.dense_layer_size = len(self.dense_layer_shape)
 
-    def mutate(self, genome):
-        num_mutations = np.random.choice(range(3))
+    def mutate(self, genome, num_mutations):
+        num_mutations = np.random.choice(num_mutations)
         for i in range(num_mutations):
             index = np.random.choice(range(1, len(genome)))
             if index < self.convolution_layer_size * self.convolution_layers:
@@ -58,6 +58,8 @@ class GenomeHandler:
                     range_index = index % self.convolution_layer_size
                     choice_range = self.convolutional_layer_shape[range_index]
                     genome[index] = np.random.choice(choice_range)
+		elif rand.uniform(0, 1) <= 0.01: # randomly flip deactivated layers
+		    genome[index - index % self.convolution_layer_size] = 1
             elif index != len(genome) - 1:
                 offset = self.convolution_layer_size * self.convolution_layers
                 new_index = (index - offset)
@@ -66,6 +68,8 @@ class GenomeHandler:
                     range_index = new_index % self.dense_layer_size
                     choice_range = self.dense_layer_shape[range_index]
                     genome[index] = np.random.choice(choice_range)
+		elif rand.uniform(0, 1) <= 0.01:
+		    genome[present_index + offset] = 1
             else:
                 genome[index] = np.random.choice(self.optimizer.keys()) 
         return genome
