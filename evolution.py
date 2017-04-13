@@ -34,7 +34,8 @@ class Evolution:
         return(split_line)
 
     # Create a population and evolve
-    def run(self, num_generations, pop_size):
+    def run(self, num_generations, pop_size, seed=7):
+	np.random.seed(seed)
         # Generate initial random population
         epochs = 10 
         members = np.array([self.genome_handler.generate() for _ in range(pop_size)])
