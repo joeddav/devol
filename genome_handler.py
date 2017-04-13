@@ -4,6 +4,7 @@ from keras.models import Sequential
 from keras.layers import Activation, Dense, Dropout, Flatten
 from keras.layers.convolutional import Convolution2D, MaxPooling2D
 from keras.layers.normalization import BatchNormalization
+from keras.preprocessing.image import ImageDataGenerator
 
 class GenomeHandler:
     def __init__(self):
@@ -111,12 +112,28 @@ class GenomeHandler:
                 model.add(Activation(self.activation[genome[offset + 3]]))
                 model.add(Dropout(float(genome[offset + 4] / 20.0)))
             offset += self.dense_layer_size
+        
+        datagen = ImageDataGenerator(featurewise_center=(genome[offset] == 1),
+            samplewise_center=(genome[offset + 1] == 1),
+            featurewise_std_normalization=(genome[offset + 2] == 1),
+            samplewise_std_normalization=(genome[offset + 3] == 1),
+            zca_whitening=(genome[offset + 4] == 1),
+            horizontal_flip=(genome[offset + 12] == 1),
+            vertical_flip=(genome[offset + 13] == 1),
+            width_shift_range=(float(genome[offset + 6]) / 10),
+            height_shift_range=(float(genome[offset + 7]) / 10),
+            shear_range=(float(genome[offset + 8]) / 10),
+            zoom_range=(float(genome[offset + 9]) / 10),
+            channel_shift_range=(float(genome[offset + 10]) / 10),
+            cval=(float(genome[offset + 11]) / 10),
+            rotation_range=int(genome[offset + 5]),
+            data_format="channels_first")
 
         model.add(Dense(10, activation='softmax'))
         model.compile(loss='categorical_crossentropy',
 		      optimizer=self.optimizer[genome[offset]],
 		      metrics=["accuracy"])
-        return model
+        return model, datagen
 
     def generate(self):
         genome = []
@@ -127,5 +144,9 @@ class GenomeHandler:
             for j, r in self.dense_layer_shape.iteritems():
                 genome.append(np.random.choice(r))
         genome.append(np.random.choice(self.optimizer.keys()))
+        for _ in range(13):
+            genome.append(rand.randint(0, 1))
+        genome.append(rand.randint(0, 180))
+
         genome[0] = 1
         return genome

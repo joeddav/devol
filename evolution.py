@@ -15,10 +15,10 @@ class Evolution:
 
     def __init__(self):
         self.genome_handler = GenomeHandler()
-	(self.x_train, self.y_train), (self.x_test, self.y_test) = mnist.load_data()
-	self.process_dataset()
+        (self.x_train, self.y_train), (self.x_test, self.y_test) = mnist.load_data()
+        self.process_dataset()
         self.datafile = 'data/' + datetime.now().ctime()  + '.csv'
-	print "model and accuracy data stored at", self.datafile
+        print "model and accuracy data stored at", self.datafile
         self.data = []
 
     def process_dataset(self):
@@ -35,13 +35,13 @@ class Evolution:
 
     # Create a population and evolve
     def run(self, num_generations, pop_size, seed=7):
-	np.random.seed(seed)
+        np.random.seed(seed)
         # Generate initial random population
         epochs = 10 
         members = np.array([self.genome_handler.generate() for _ in range(pop_size)])
         #with open("best_50.csv") as f:
-	#	members = np.array([self.fix_line(line) for line in f])
-	fit = np.array(self.fitnesses(members, epochs))
+        #	members = np.array([self.fix_line(line) for line in f])
+        fit = np.array(self.fitnesses(members, epochs))
         pop = Population(members, fit)
         #epochs -= 1
 
@@ -50,33 +50,36 @@ class Evolution:
             members = []
             for i in range(int(pop_size*0.95)): # Crossover
                 members.append(self.crossover(pop.select(), pop.select()))
-	    members += pop.getBest(pop_size - int(pop_size*0.95))
+            members += pop.getBest(pop_size - int(pop_size*0.95))
             for i in range(len(members)): # Mutation
-	        members[i] = self.mutate(members[i], gen)
+                members[i] = self.mutate(members[i], gen)
             fit = np.array(self.fitnesses(members, epochs))
-	    members = np.array(members)
+            members = np.array(members)
             pop = Population(members, fit)
             #epochs -= 1
             #epochs = epochs if epochs >= 3 else 3
 
     def fitnesses(self, genomes, epochs):
-	accuracies = [self.evaluate(x, epochs)[1] for x in genomes]	
-	accuracies -= min(accuracies)
-	accuracies /= max(accuracies)
-	return map(lambda x: self.fitness(x), accuracies)
+        accuracies = [self.evaluate(x, epochs)[1] for x in genomes]	
+        accuracies -= min(accuracies)
+        accuracies /= max(accuracies)
+        return map(lambda x: self.fitness(x), accuracies)
 
     def fitness(self, val):
-	return (val * 100) ** 4
+        return (val * 100) ** 4
 
     # Returns the accuracy for a model as 1 / loss
     def evaluate(self, genome, epochs):
-        model = self.genome_handler.decode(genome)
+        model, datagen = self.genome_handler.decode(genome)
+        datagen.fit(self.x_train)
         loss, accuracy = None, None
-	model.fit(self.x_train, self.y_train, \
-		validation_data=(self.x_test, self.y_test),
-		epochs=epochs, batch_size=200, verbose=1,
-		callbacks=[EarlyStopping(monitor='val_loss', patience=2, verbose=1)])
-	loss, accuracy = model.evaluate(self.x_test, self.y_test, verbose=0)
+        model.fit_generator(datagen.flow(self.x_train, self.y_train, batch_size=200),
+            steps_per_epoch=300,
+            validation_data=(self.x_test, self.y_test),
+            epochs=epochs, 
+            verbose=1,
+            callbacks=[EarlyStopping(monitor='val_loss', patience=2, verbose=1)])
+        loss, accuracy = model.evaluate(self.x_test, self.y_test, verbose=0)
 
         # Record the stats
         with open(self.datafile, 'a') as csvfile:
@@ -96,7 +99,7 @@ class Evolution:
         return np.array(child)
     
     def mutate(self, genome, generation):
-	num_mutations = max(3, generation / 2)
+        num_mutations = max(3, generation / 2)
         return self.genome_handler.mutate(genome, num_mutations)
 
 class Population:
@@ -110,10 +113,10 @@ class Population:
         self.s_fit = sum(self.fitnesses)
 
     def getBest(self, n):
-	combined = [(self.members[i], self.fitnesses[i]) \
-			for i in range(len(self.members))]
-	sorted(combined, key=(lambda x: x[1]), reverse=True)
-	return map(lambda x: x[0], combined[:n])
+        combined = [(self.members[i], self.fitnesses[i]) \
+                for i in range(len(self.members))]
+        sorted(combined, key=(lambda x: x[1]), reverse=True)
+        return map(lambda x: x[0], combined[:n])
 
     def select(self):
         dart = rand.uniform(0, self.s_fit)
