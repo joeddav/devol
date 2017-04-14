@@ -78,7 +78,7 @@ class Evolution:
             validation_data=(self.x_test, self.y_test),
             epochs=epochs, 
             verbose=1,
-            callbacks=[EarlyStopping(monitor='val_loss', patience=2, verbose=1)])
+            callbacks=[EarlyStopping(monitor='val_loss', patience=1, verbose=1)])
         loss, accuracy = model.evaluate(self.x_test, self.y_test, verbose=0)
 
         # Record the stats
