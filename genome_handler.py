@@ -1,5 +1,6 @@
 import numpy as np
 import random as rand
+import math
 from keras.models import Sequential
 from keras.layers import Activation, Dense, Dropout, Flatten
 from keras.layers.convolutional import Convolution2D, MaxPooling2D
@@ -7,48 +8,49 @@ from keras.layers.normalization import BatchNormalization
 from keras.preprocessing.image import ImageDataGenerator
 
 class GenomeHandler:
-    def __init__(self):
-        self.optimizer = {
-            0: 'adam',
-            1: 'rmsprop',
-            2: 'adagrad',
-            3: 'adadelta'
-        }
-        self.activation = {
-            0: 'relu',
-            1: 'sigmoid',
-        }
-        self.convolutional_layer_shape = {
+    def __init__(self, max_conv_layers, max_dense_layers, max_filters, max_dense_nodes,
+                input_shape, batch_normalization=True, dropout=True, max_pooling=True):
+        self.optimizer = [
+            'adam',
+            'rmsprop',
+            'adagrad',
+            'adadelta'
+        ]
+        self.activation = [
+            'relu',
+            'sigmoid',
+        ]
+        self.convolutional_layer_shape = [
             # Present
-            0: [0, 1],
+            [0, 1],
             # Filters
-            1: [2**i for i in range(3, 8)],
+            [2**i for i in range(3, int(math.log(max_filters, 2)) + 1)],
             # Batch Normalization
-            2: [0, 1],
+            [0, (1 if batch_normalization else 0)],
             # Activation
-            3: self.activation.keys(),
+            range(len(self.activation)),
             # Dropout
-            4: [i for i in range(11)],
+            [(i if dropout else 0) for i in range(11)],
             # Max Pooling
-            5: range(3),
-        }
-
-        self.dense_layer_shape = {
+            range(3) if max_pooling else 0,
+        ]
+        self.dense_layer_shape = [
             # Present
-            0: [0, 1],
+            [0, 1],
             # Number of Nodes
-            1: [2**i for i in range(4, 11)],
+            [2**i for i in range(4, int(math.log(max_dense_nodes, 2)) + 1)],
             # Batch Normalization
-            2: [0, 1],
+            [0, (1 if batch_normalization else 0)],
             # Activation
-            3: self.activation.keys(),
+            range(len(self.activation)),
             # Dropout
-            4: [i for i in range(11)],
-        }
-        self.convolution_layers = 6
+            [(i if dropout else 0) for i in range(11)],
+        ]
+        self.convolution_layers = max_conv_layers
         self.convolution_layer_size = len(self.convolutional_layer_shape)
-        self.dense_layers = 3
+        self.dense_layers = max_dense_layers - 1 # this doesn't include the softmax layer, so -1
         self.dense_layer_size = len(self.dense_layer_shape)
+        self.input_shape = input_shape
 
     def mutate(self, genome, num_mutations):
         num_mutations = np.random.choice(num_mutations)
@@ -86,7 +88,7 @@ class GenomeHandler:
                     convolution = Convolution2D(
                                         genome[offset + 1], (3, 3),
                                         padding='same',
-                                        input_shape=(1, 28, 28))
+                                        input_shape=self.input_shape)
                     input_layer = False
                 else:
                     convolution = Convolution2D(
@@ -138,12 +140,12 @@ class GenomeHandler:
     def generate(self):
         genome = []
         for i in range(self.convolution_layers):
-            for j, r in self.convolutional_layer_shape.iteritems():
+            for r in self.convolutional_layer_shape:
                 genome.append(np.random.choice(r))
         for i in range(self.dense_layers):
-            for j, r in self.dense_layer_shape.iteritems():
+            for r in self.dense_layer_shape:
                 genome.append(np.random.choice(r))
-        genome.append(np.random.choice(self.optimizer.keys()))
+        genome.append(np.random.choice(range(len(self.optimizer))))
         for _ in range(13):
             genome.append(rand.randint(0, 1))
         genome.append(rand.randint(0, 180))

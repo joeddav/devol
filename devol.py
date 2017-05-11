@@ -9,44 +9,26 @@ import random as rand
 import math
 import csv
 
-# Our genetic algorithm.
-# This will contain methods for fitness, crossover, mutation, etc.
-class Evolution:
+class Devol:
 
-    def __init__(self):
-        self.genome_handler = GenomeHandler()
-        (self.x_train, self.y_train), (self.x_test, self.y_test) = mnist.load_data()
-        self.process_dataset()
-        self.datafile = 'data/' + datetime.now().ctime()  + '.csv'
-        print "model and accuracy data stored at", self.datafile
+    def __init__(self, genome_handler, data_path=""):
+        self.genome_handler = genome_handler
+        self.datafile = data_path or datetime.now().ctime() + '.csv'
+        print "Genome encoding and accuracy data stored at", self.datafile
         self.data = []
 
-    def process_dataset(self):
-        self.x_train = self.x_train.reshape(self.x_train.shape[0], 1, 28, 28).astype("float32") / 255
-        self.x_test = self.x_test.reshape(self.x_test.shape[0], 1, 28, 28).astype('float32') / 255
-        self.y_train = np_utils.to_categorical(self.y_train)
-        self.y_test = np_utils.to_categorical(self.y_test)
-		
-    def fix_line(self, line):
-        split_line = line.strip().split(',')
-        for i in range(len(split_line)):
-            split_line[i] = int(split_line[i])
-        return(split_line)
-
     # Create a population and evolve
-    def run(self, num_generations, pop_size, seed=7):
-        np.random.seed(seed)
+    def run(self, dataset, num_generations, pop_size, epochs):
+        print "Initial Population..."
+        (self.x_train, self.y_train), (self.x_test, self.y_test) = dataset
         # Generate initial random population
-        epochs = 10 
         members = np.array([self.genome_handler.generate() for _ in range(pop_size)])
-        #with open("best_50.csv") as f:
-        #	members = np.array([self.fix_line(line) for line in f])
         fit = np.array(self.fitnesses(members, epochs))
         pop = Population(members, fit)
-        #epochs -= 1
 
         # Evolve over generations
         for gen in range(1, num_generations):
+            print "Population #" + str(gen + 1)
             members = []
             for i in range(int(pop_size*0.95)): # Crossover
                 members.append(self.crossover(pop.select(), pop.select()))
@@ -56,8 +38,6 @@ class Evolution:
             fit = np.array(self.fitnesses(members, epochs))
             members = np.array(members)
             pop = Population(members, fit)
-            #epochs -= 1
-            #epochs = epochs if epochs >= 3 else 3
 
     def fitnesses(self, genomes, epochs):
         accuracies = [self.evaluate(x, epochs)[1] for x in genomes]	
@@ -73,12 +53,16 @@ class Evolution:
         model, datagen = self.genome_handler.decode(genome)
         datagen.fit(self.x_train)
         loss, accuracy = None, None
-        model.fit_generator(datagen.flow(self.x_train, self.y_train, batch_size=200),
-            steps_per_epoch=300,
-            validation_data=(self.x_test, self.y_test),
-            epochs=epochs, 
+        model.fit(self.x_train, self.y_train, validation_data=(self.x_test, self.y_test),
+            epochs=epochs,
             verbose=1,
             callbacks=[EarlyStopping(monitor='val_loss', patience=2, verbose=1)])
+        # model.fit_generator(datagen.flow(self.x_train, self.y_train, batch_size=200),
+        #     steps_per_epoch=300,
+        #     validation_data=(self.x_test, self.y_test),
+        #     epochs=epochs, 
+        #     verbose=1,
+        #     callbacks=[EarlyStopping(monitor='val_loss', patience=2, verbose=1)])
         loss, accuracy = model.evaluate(self.x_test, self.y_test, verbose=0)
 
         # Record the stats
