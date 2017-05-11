@@ -46,6 +46,34 @@ class GenomeHandler:
             # Dropout
             [(i if dropout else 0) for i in range(11)],
         ]
+        self.data_augmentation_values = [
+            #featurewise_center
+            [0, 1],
+            #samplewise_center
+            [0, 1],
+            #featurewise_std_normalization
+            [0, 1],
+            #samplewise_std_normalization
+            [0, 1],
+            #zca_whitening
+            [0, 1],
+            #rotation_range
+            [-10, 0, 10],
+            #width_shift_range
+            [0, 1, 2], # divide by 20
+            #height_shift_range
+            [0, 1, 2], # divide by 20
+            #shear_range
+            [0, 1, 2], # divide by 20
+            #zoom_range
+            [0, 1, 2, 3, 4], # divide by 20
+            #channel_shift_range: this is for RGB images
+            #cval: this is the constant fill and I think we want it to be 0
+            #horizontal_flip
+            [0, 1],
+            #vertical_flip
+            [0, 1],
+        ]
         self.convolution_layers = max_conv_layers
         self.convolution_layer_size = len(self.convolutional_layer_shape)
         self.dense_layers = max_dense_layers - 1 # this doesn't include the softmax layer, so -1
@@ -115,20 +143,21 @@ class GenomeHandler:
                 model.add(Dropout(float(genome[offset + 4] / 20.0)))
             offset += self.dense_layer_size
         
-        datagen = ImageDataGenerator(featurewise_center=(genome[offset] == 1),
+        datagen = ImageDataGenerator(
+            featurewise_center=(genome[offset] == 1),
             samplewise_center=(genome[offset + 1] == 1),
             featurewise_std_normalization=(genome[offset + 2] == 1),
-            samplewise_std_normalization=(genome[offset + 3] == 1),
+            #samplewise_std_normalization=(genome[offset + 3] == 1),
             zca_whitening=(genome[offset + 4] == 1),
-            horizontal_flip=(genome[offset + 12] == 1),
-            vertical_flip=(genome[offset + 13] == 1),
-            width_shift_range=(float(genome[offset + 6]) / 10),
-            height_shift_range=(float(genome[offset + 7]) / 10),
-            shear_range=(float(genome[offset + 8]) / 10),
-            zoom_range=(float(genome[offset + 9]) / 10),
-            channel_shift_range=(float(genome[offset + 10]) / 10),
-            cval=(float(genome[offset + 11]) / 10),
             rotation_range=int(genome[offset + 5]),
+            width_shift_range=(float(genome[offset + 6]) / 20.0),
+            height_shift_range=(float(genome[offset + 7]) / 20.0),
+            shear_range=(float(genome[offset + 8]) / 20.0),
+            zoom_range=(float(genome[offset + 9]) / 20.0),
+            #channel_shift_range=(float(genome[offset + 10]) / 50),
+            #cval=(float(genome[offset + 11]) / 50),
+            horizontal_flip=(genome[offset + 10] == 1),
+            vertical_flip=(genome[offset + 11] == 1),
             data_format="channels_first")
 
         model.add(Dense(10, activation='softmax'))
@@ -146,9 +175,7 @@ class GenomeHandler:
             for r in self.dense_layer_shape:
                 genome.append(np.random.choice(r))
         genome.append(np.random.choice(range(len(self.optimizer))))
-        for _ in range(13):
-            genome.append(rand.randint(0, 1))
-        genome.append(rand.randint(0, 180))
-
+        for r in self.data_augmentation_values:
+            genome.append(np.random.choice(r))
         genome[0] = 1
         return genome

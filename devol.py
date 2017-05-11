@@ -53,16 +53,16 @@ class Devol:
         model, datagen = self.genome_handler.decode(genome)
         datagen.fit(self.x_train)
         loss, accuracy = None, None
-        model.fit(self.x_train, self.y_train, validation_data=(self.x_test, self.y_test),
-            epochs=epochs,
-            verbose=1,
-            callbacks=[EarlyStopping(monitor='val_loss', patience=2, verbose=1)])
         # model.fit_generator(datagen.flow(self.x_train, self.y_train, batch_size=200),
         #     steps_per_epoch=300,
         #     validation_data=(self.x_test, self.y_test),
         #     epochs=epochs, 
         #     verbose=1,
         #     callbacks=[EarlyStopping(monitor='val_loss', patience=2, verbose=1)])
+        model.fit(self.x_train, self.y_train, validation_data=(self.x_test, self.y_test),
+            epochs=epochs,
+            verbose=1,
+            callbacks=[EarlyStopping(monitor='val_loss', patience=1, verbose=1)])
         loss, accuracy = model.evaluate(self.x_test, self.y_test, verbose=0)
 
         # Record the stats
