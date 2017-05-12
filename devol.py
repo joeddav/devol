@@ -44,15 +44,8 @@ class DEvol:
 
     # Returns the accuracy for a model as 1 / loss
     def evaluate(self, genome, epochs):
-        model, datagen = self.genome_handler.decode(genome)
-        datagen.fit(self.x_train)
+        model = self.genome_handler.decode(genome)
         loss, accuracy = None, None
-        # model.fit_generator(datagen.flow(self.x_train, self.y_train, batch_size=200),
-        #     steps_per_epoch=300,
-        #     validation_data=(self.x_test, self.y_test),
-        #     epochs=epochs, 
-        #     verbose=1,
-        #     callbacks=[EarlyStopping(monitor='val_loss', patience=2, verbose=1)])
         model.fit(self.x_train, self.y_train, validation_data=(self.x_test, self.y_test),
             epochs=epochs,
             verbose=0,

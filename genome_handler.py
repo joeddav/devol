@@ -5,18 +5,18 @@ from keras.models import Sequential
 from keras.layers import Activation, Dense, Dropout, Flatten
 from keras.layers.convolutional import Convolution2D, MaxPooling2D
 from keras.layers.normalization import BatchNormalization
-from keras.preprocessing.image import ImageDataGenerator
 
 class GenomeHandler:
     def __init__(self, max_conv_layers, max_dense_layers, max_filters, max_dense_nodes,
-                input_shape, batch_normalization=True, dropout=True, max_pooling=True):
-        self.optimizer = [
+                input_shape, batch_normalization=True, dropout=True, max_pooling=True,
+                optimizers=None, activations=None):
+        self.optimizer = optimizers or [
             'adam',
             'rmsprop',
             'adagrad',
             'adadelta'
         ]
-        self.activation = [
+        self.activation = activations or [
             'relu',
             'sigmoid',
         ]
@@ -45,34 +45,6 @@ class GenomeHandler:
             range(len(self.activation)),
             # Dropout
             [(i if dropout else 0) for i in range(11)],
-        ]
-        self.data_augmentation_values = [
-            #featurewise_center
-            [0, 1],
-            #samplewise_center
-            [0, 1],
-            #featurewise_std_normalization
-            [0, 1],
-            #samplewise_std_normalization
-            [0, 1],
-            #zca_whitening
-            [0, 1],
-            #rotation_range
-            [-10, 0, 10],
-            #width_shift_range
-            [0, 1, 2], # divide by 20
-            #height_shift_range
-            [0, 1, 2], # divide by 20
-            #shear_range
-            [0, 1, 2], # divide by 20
-            #zoom_range
-            [0, 1, 2, 3, 4], # divide by 20
-            #channel_shift_range: this is for RGB images
-            #cval: this is the constant fill and I think we want it to be 0
-            #horizontal_flip
-            [0, 1],
-            #vertical_flip
-            [0, 1],
         ]
         self.convolution_layers = max_conv_layers
         self.convolution_layer_size = len(self.convolutional_layer_shape)
@@ -142,29 +114,12 @@ class GenomeHandler:
                 model.add(Activation(self.activation[genome[offset + 3]]))
                 model.add(Dropout(float(genome[offset + 4] / 20.0)))
             offset += self.dense_layer_size
-        
-        datagen = ImageDataGenerator(
-            featurewise_center=(genome[offset] == 1),
-            samplewise_center=(genome[offset + 1] == 1),
-            featurewise_std_normalization=(genome[offset + 2] == 1),
-            #samplewise_std_normalization=(genome[offset + 3] == 1),
-            zca_whitening=(genome[offset + 4] == 1),
-            rotation_range=int(genome[offset + 5]),
-            width_shift_range=(float(genome[offset + 6]) / 20.0),
-            height_shift_range=(float(genome[offset + 7]) / 20.0),
-            shear_range=(float(genome[offset + 8]) / 20.0),
-            zoom_range=(float(genome[offset + 9]) / 20.0),
-            #channel_shift_range=(float(genome[offset + 10]) / 50),
-            #cval=(float(genome[offset + 11]) / 50),
-            horizontal_flip=(genome[offset + 10] == 1),
-            vertical_flip=(genome[offset + 11] == 1),
-            data_format="channels_first")
 
         model.add(Dense(10, activation='softmax'))
         model.compile(loss='categorical_crossentropy',
 		      optimizer=self.optimizer[genome[offset]],
 		      metrics=["accuracy"])
-        return model, datagen
+        return model
 
     def generate(self):
         genome = []
@@ -175,7 +130,5 @@ class GenomeHandler:
             for r in self.dense_layer_shape:
                 genome.append(np.random.choice(r))
         genome.append(np.random.choice(range(len(self.optimizer))))
-        for r in self.data_augmentation_values:
-            genome.append(np.random.choice(r))
         genome[0] = 1
         return genome
