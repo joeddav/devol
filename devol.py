@@ -17,14 +17,14 @@ class DEvol:
         print "Genome encoding and accuracy data stored at", self.datafile
 
     # Create a population and evolve
-    def run(self, dataset, num_generations, pop_size, epochs):
+    def run(self, dataset, num_generations, pop_size, epochs, fitness=None):
         print "Initial Population..."
         (self.x_train, self.y_train), (self.x_test, self.y_test) = dataset
 
         # Generate initial random population
         members = [self.genome_handler.generate() for _ in range(pop_size)]
         fit = [self.evaluate(member, epochs)[1] for member in members]
-        pop = Population(members, fit)
+        pop = Population(members, fit, fitness)
         fit = np.array(fit)
         print "max:", max(fit), "\taverage:", np.mean(fit), "\tstd:", np.std(fit)
 
@@ -38,7 +38,7 @@ class DEvol:
             for i in range(len(members)): # Mutation
                 members[i] = self.mutate(members[i], gen)
             fit = [self.evaluate(member, epochs)[1] for member in members]
-            pop = Population(members, fit)
+            pop = Population(members, fit, fitness)
             fit = np.array(fit)
             print "max:", max(fit), "\taverage:", np.mean(fit), "\tstd:", np.std(fit)
 
@@ -66,7 +66,7 @@ class DEvol:
         return child
     
     def mutate(self, genome, generation):
-        num_mutations = max(3, generation / 2)
+        num_mutations = max(3, generation / 4) # increase mutations as program continues
         return self.genome_handler.mutate(genome, num_mutations)
 
 class Population:
@@ -74,11 +74,11 @@ class Population:
     def __len__(self):
         return len(self.members)
 
-    def __init__(self, members, fitnesses):
+    def __init__(self, members, fitnesses, score)
         self.members = members
         fitnesses -= min(fitnesses)
         fitnesses /= max(fitnesses)
-        self.scores = map(self.score, fitnesses)
+        self.scores = map(score or self.score, fitnesses)
         self.s_fit = sum(self.scores)
 
     def score(self, fitness):
