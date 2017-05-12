@@ -74,7 +74,7 @@ class Population:
     def __len__(self):
         return len(self.members)
 
-    def __init__(self, members, fitnesses, score)
+    def __init__(self, members, fitnesses, score):
         self.members = members
         fitnesses -= min(fitnesses)
         fitnesses /= max(fitnesses)
