@@ -10,7 +10,7 @@ Each model is represented as fixed-width genome encoding information about the n
 
 Below is a highly simplified visualization of how genetic crossover might take place between two models.
 
-<img width="75%" src="https://lh4.googleusercontent.com/JjeY5hTXonAOoqD1rUnylR91Adk_dXNz7wIytlvBuGKN-S4GsladKvWq3g3kz662APzNvt7uQwB3XLk=w2880-h1446-rw">
+<img width="75%" src="https://preview.ibb.co/gdMDak/crossover.png">
 <i>Genetic crossover and mutation of neural networks</i>
 
 ## Results
@@ -19,7 +19,7 @@ For demonstration, we ran our program on the MNIST dataset (see `mnist-example.i
 
 Keep in mind that these results are obtained with simple, relatively shallow neural networks with no data augmentation, transfer learning, ensembling, fine-tuning, or any other fancy optimization approach. Virtually any of these techniques could be incorporated into the genetic program, however. 
 
-<img width="75%" src="https://lh3.googleusercontent.com/ZN4nHZuVgXBtDZnK_P61kkxhyVHUEFGyvFi9nMGKWtUMI2UPymwhKinGP39X53zNwhfIKXjVkm2CXiI=w2880-h1446-rw">
+<img width="75%" src="https://preview.ibb.co/i4BDak/running_max.png">
 <i>Running max of MNIST accuracies across 20 generations</i>
 
 ## Application
