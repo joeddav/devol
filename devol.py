@@ -9,7 +9,7 @@ import random as rand
 import math
 import csv
 
-class Devol:
+class DEvol:
 
     def __init__(self, genome_handler, data_path=""):
         self.genome_handler = genome_handler
