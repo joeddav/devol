@@ -1,19 +1,18 @@
-from datetime import datetime
+from genome_handler import GenomeHandler
 import numpy as np
 from keras.models import Sequential
 from keras.utils import np_utils
 from keras.datasets import mnist, cifar10
-from genome_handler import GenomeHandler
 from keras.callbacks import EarlyStopping
+from datetime import datetime
 import random as rand
-import math
 import csv
 
 class DEvol:
 
     def __init__(self, genome_handler, data_path=""):
         self.genome_handler = genome_handler
-        self.datafile = data_path or datetime.now().ctime() + '.csv'
+        self.datafile = data_path or (datetime.now().ctime() + '.csv')
         print "Genome encoding and accuracy data stored at", self.datafile
 
     # Create a population and evolve
@@ -42,7 +41,6 @@ class DEvol:
             fit = np.array(fit)
             print "max:", max(fit), "\taverage:", np.mean(fit), "\tstd:", np.std(fit)
 
-    # Returns the accuracy for a model as 1 / loss
     def evaluate(self, genome, epochs):
         model = self.genome_handler.decode(genome)
         loss, accuracy = None, None
