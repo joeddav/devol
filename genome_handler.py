@@ -6,6 +6,18 @@ from keras.layers import Activation, Dense, Dropout, Flatten
 from keras.layers.convolutional import Convolution2D, MaxPooling2D
 from keras.layers.normalization import BatchNormalization
 
+##################################
+# Genomes are represented as fixed-with lists of integers corresponding
+# to sequential layers and properties. A model with 2 convolutional layers
+# and 1 dense layer would look like:
+#
+# [<conv layer><conv layer><dense layer><optimizer>]
+#
+# The makeup of the convolutional layers and dense layers is defined in the
+# GenomeHandler below under self.convolutional_layer_shape and
+# self.dense_layer_shape. <optimizer> consists of just one property.
+###################################
+
 class GenomeHandler:
     def __init__(self, max_conv_layers, max_dense_layers, max_filters, max_dense_nodes,
                 input_shape, batch_normalization=True, dropout=True, max_pooling=True,
