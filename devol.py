@@ -7,39 +7,45 @@ from keras.callbacks import EarlyStopping
 from datetime import datetime
 import random as rand
 import csv
+from tqdm import trange, tqdm
+import sys
 
 class DEvol:
 
     def __init__(self, genome_handler, data_path=""):
         self.genome_handler = genome_handler
         self.datafile = data_path or (datetime.now().ctime() + '.csv')
-        print "Genome encoding and accuracy data stored at", self.datafile
+        print "Genome encoding and accuracy data stored at", self.datafile, "\n"
 
     # Create a population and evolve
     def run(self, dataset, num_generations, pop_size, epochs, fitness=None):
-        print "Initial Population..."
+        generations = trange(num_generations, desc="Generations")
         (self.x_train, self.y_train), (self.x_test, self.y_test) = dataset
-
         # Generate initial random population
         members = [self.genome_handler.generate() for _ in range(pop_size)]
-        fit = [self.evaluate(member, epochs)[1] for member in members]
+        fit = []
+        for i in trange(len(members), desc="Gen 1 Models Fitness Eval"):
+            fit.append(self.evaluate(members[i], epochs)[1])
         pop = Population(members, fit, fitness)
         fit = np.array(fit)
-        print "max:", max(fit), "\taverage:", np.mean(fit), "\tstd:", np.std(fit)
+        tqdm.write("Generation 1:\t\tmax: {0}\t\taverage: {1}\t\tstd: {2}".format(max(fit), np.mean(fit), np.std(fit)))
 
         # Evolve over generations
-        for gen in range(1, num_generations):
-            print "Population #" + str(gen + 1)
+        for gen in generations:
+            if gen == 0:
+                continue
             members = []
             for i in range(int(pop_size*0.95)): # Crossover
                 members.append(self.crossover(pop.select(), pop.select()))
             members += pop.getBest(pop_size - int(pop_size*0.95))
             for i in range(len(members)): # Mutation
                 members[i] = self.mutate(members[i], gen)
-            fit = [self.evaluate(member, epochs)[1] for member in members]
+            fit = []
+            for i in trange(len(members), desc="Gen %i Models Fitness Eval" % (gen + 1)):
+                fit.append(self.evaluate(members[i], epochs)[1])
             pop = Population(members, fit, fitness)
             fit = np.array(fit)
-            print "max:", max(fit), "\taverage:", np.mean(fit), "\tstd:", np.std(fit)
+            tqdm.write("Generation {3}:\t\tmax: {0}\t\taverage: {1}\t\tstd: {2}".format(max(fit), np.mean(fit), np.std(fit), gen + 1))
 
     def evaluate(self, genome, epochs):
         model = self.genome_handler.decode(genome)

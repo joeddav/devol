@@ -86,7 +86,7 @@ class GenomeHandler:
 		elif rand.uniform(0, 1) <= 0.01:
 		    genome[present_index + offset] = 1
             else:
-                genome[index] = np.random.choice(self.optimizer.keys()) 
+                genome[index] = np.random.choice(range(len(self.optimizer))) 
         return genome
 
     def decode(self, genome):
