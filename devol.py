@@ -1,3 +1,4 @@
+from __future__ import print_function
 from genome_handler import GenomeHandler
 import numpy as np
 from keras.models import Sequential
@@ -15,7 +16,7 @@ class DEvol:
     def __init__(self, genome_handler, data_path=""):
         self.genome_handler = genome_handler
         self.datafile = data_path or (datetime.now().ctime() + '.csv')
-        print "Genome encoding and accuracy data stored at", self.datafile, "\n"
+        print("Genome encoding and accuracy data stored at", self.datafile, "\n")
 
     # Create a population and evolve
     def run(self, dataset, num_generations, pop_size, epochs, fitness=None):
