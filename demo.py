@@ -18,22 +18,28 @@ dataset = ((x_train, y_train), (x_test, y_test))
 
 # **Prepare the genome configuration**
 # The `GenomeHandler` class handles the constraints that are imposed upon 
-# models in a particular genetic program. In this example, a genome is 
-# allowed **up to** 6 convolutional layeres, 3 dense layers, 256 feature 
-# maps in each convolution, and 1024 nodes in each dense layer. It also 
-# specifies three possible activation functions. See `genome-handler.py` 
+# models in a particular genetic program. See `genome-handler.py` 
 # for more information.
 
-genome_handler = GenomeHandler(6, 3, 256, 1024, x_train.shape[1:], 
-                               activations=["relu", "sigmoid"])
+max_conv_layers = 6
+max_dense_layers = 2 # including final softmax layer
+max_conv_kernals = 256
+max_dense_nodes = 1024
+input_shape = x_train.shape[1:]
+num_classes = 10
+
+genome_handler = GenomeHandler(max_conv_layers, max_dense_layers, max_conv_kernals, \
+                    max_dense_nodes, input_shape, num_classes)
 
 # **Create and run the genetic program**
 # The next, and final, step is create a `DEvol` and run it. Here we specify 
-# a few settings pertaining to the genetic program. In this example, we 
-# have 10 generations of evolution, 20 members in each population, and 1 
-# epoch of training used to evaluate each model's fitness. The program 
+# a few settings pertaining to the genetic program. The program 
 # will save each genome's encoding, as well as the model's loss and 
 # accuracy, in a `.csv` file printed at the beginning of program.
 
+num_generations = 10
+population_size = 2
+num_epochs = 1
+
 devol = DEvol(genome_handler)
-devol.run(dataset, 10, 20, 1)
+devol.run(dataset, num_generations, population_size, num_epochs)

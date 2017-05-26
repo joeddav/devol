@@ -5,6 +5,7 @@ from keras.models import Sequential
 from keras.layers import Activation, Dense, Dropout, Flatten
 from keras.layers.convolutional import Convolution2D, MaxPooling2D
 from keras.layers.normalization import BatchNormalization
+from tqdm import tqdm
 
 ##################################
 # Genomes are represented as fixed-with lists of integers corresponding
@@ -20,8 +21,10 @@ from keras.layers.normalization import BatchNormalization
 
 class GenomeHandler:
     def __init__(self, max_conv_layers, max_dense_layers, max_filters, max_dense_nodes,
-                input_shape, batch_normalization=True, dropout=True, max_pooling=True,
+                input_shape, n_classes, batch_normalization=True, dropout=True, max_pooling=True,
                 optimizers=None, activations=None):
+        if max_dense_layers < 1:
+            raise ValueError("At least one dense layer is required for softmax layer") 
         self.optimizer = optimizers or [
             'adam',
             'rmsprop',
@@ -63,6 +66,7 @@ class GenomeHandler:
         self.dense_layers = max_dense_layers - 1 # this doesn't include the softmax layer, so -1
         self.dense_layer_size = len(self.dense_layer_shape)
         self.input_shape = input_shape
+        self.n_classes = n_classes
 
     def mutate(self, genome, num_mutations):
         num_mutations = np.random.choice(num_mutations)
@@ -116,21 +120,28 @@ class GenomeHandler:
                     model.add(MaxPooling2D(pool_size=(2, 2), padding="same"))
             offset += self.convolution_layer_size
 
-        model.add(Flatten())
+        if not input_layer:
+            model.add(Flatten())
 
         for i in range(self.dense_layers):
             if genome[offset]:
-                model.add(Dense(genome[offset + 1]))
+                dense = None
+                if input_layer:
+                    dense = Dense(genome[offset + 1], input_shape=self.input_shape)
+                    input_layer = False
+                else:
+                    dense = Dense(genome[offset + 1])
+                model.add(dense)
                 if genome[offset + 2]:
                     model.add(BatchNormalization())
                 model.add(Activation(self.activation[genome[offset + 3]]))
                 model.add(Dropout(float(genome[offset + 4] / 20.0)))
             offset += self.dense_layer_size
-
-        model.add(Dense(10, activation='softmax'))
+        
+        model.add(Dense(self.n_classes, activation='softmax'))
         model.compile(loss='categorical_crossentropy',
-		      optimizer=self.optimizer[genome[offset]],
-		      metrics=["accuracy"])
+            optimizer=self.optimizer[genome[offset]],
+            metrics=["accuracy"])
         return model
 
     def generate(self):
