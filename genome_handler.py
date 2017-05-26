@@ -25,6 +25,7 @@ class GenomeHandler:
                 optimizers=None, activations=None):
         if max_dense_layers < 1:
             raise ValueError("At least one dense layer is required for softmax layer") 
+        filter_range_max = int(math.log(max_filters, 2)) + 1 if max_filters > 0 else 0
         self.optimizer = optimizers or [
             'adam',
             'rmsprop',
@@ -39,7 +40,7 @@ class GenomeHandler:
             # Present
             [0, 1],
             # Filters
-            [2**i for i in range(3, int(math.log(max_filters, 2)) + 1)],
+            [2**i for i in range(3, filter_range_max)],
             # Batch Normalization
             [0, (1 if batch_normalization else 0)],
             # Activation
