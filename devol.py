@@ -1,3 +1,4 @@
+from __future__ import print_function
 
 from genome_handler import GenomeHandler
 import numpy as np
