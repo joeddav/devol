@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 from genome_handler import GenomeHandler
 import numpy as np
 from keras.models import Sequential
@@ -83,7 +83,7 @@ class Population:
         self.members = members
         fitnesses -= min(fitnesses)
         fitnesses /= max(fitnesses)
-        self.scores = map(score or self.score, fitnesses)
+        self.scores = list(map(score or self.score, fitnesses))
         self.s_fit = sum(self.scores)
 
     def score(self, fitness):
@@ -93,7 +93,7 @@ class Population:
         combined = [(self.members[i], self.scores[i]) \
                 for i in range(len(self.members))]
         sorted(combined, key=(lambda x: x[1]), reverse=True)
-        return map(lambda x: x[0], combined[:n])
+        return [x[0] for x in combined[:n]]
 
     def select(self):
         dart = rand.uniform(0, self.s_fit)
