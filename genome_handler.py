@@ -95,6 +95,8 @@ class GenomeHandler:
         return genome
 
     def decode(self, genome):
+        if not self.is_compatible_genome(genome):
+            raise ValueError("Invalid genome for specified configs")
         model = Sequential()
         offset = 0
         input_layer = True
@@ -156,3 +158,38 @@ class GenomeHandler:
         genome.append(np.random.choice(list(range(len(self.optimizer)))))
         genome[0] = 1
         return genome
+
+    def is_compatible_genome(self, genome):
+        expected_len = self.convolution_layers * self.convolution_layer_size \
+                        + self.dense_layers * self.dense_layer_size + 1
+        if len(genome) != expected_len:
+            return False
+        ind = 0
+        for i in range(self.convolution_layers):
+            for j in range(self.convolution_layer_size):
+                if genome[ind + j] not in self.convolutional_layer_shape[j]:
+                    return False
+            ind += self.convolution_layer_size
+        for i in range(self.dense_layers):
+            for j in range(self.dense_layer_size):
+                if genome[ind + j] not in self.dense_layer_shape[j]:
+                    return False
+            ind += self.dense_layer_size
+        if genome[ind] not in range(len(self.optimizer)):
+            return False
+        return True
+
+    # metric = accuracy or loss
+    def best_genome(self, csv_path, metric="accuracy", include_metrics=True):
+        best = max if metric is "accuracy" else min
+        col = -1 if metric is "accuracy" else -2
+        data = np.genfromtxt(csv_path, delimiter=",")
+        row = list(data[:, col]).index(best(data[:, col]))
+        genome = list(map(int, data[row, :-2]))
+        if include_metrics:
+            genome += list(data[row, -2:])
+        return genome
+
+    # metric = accuracy or loss
+    def decode_best(self, csv_path, metric="accuracy"):
+        return self.decode(self.best_genome(csv_path, metric, False))

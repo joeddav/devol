@@ -38,8 +38,9 @@ genome_handler = GenomeHandler(max_conv_layers, max_dense_layers, max_conv_kerna
 # accuracy, in a `.csv` file printed at the beginning of program.
 
 num_generations = 10
-population_size = 2
+population_size = 10
 num_epochs = 1
 
 devol = DEvol(genome_handler)
-devol.run(dataset, num_generations, population_size, num_epochs)
+model, accuracy = devol.run(dataset, num_generations, population_size, num_epochs)
+print model.summary()

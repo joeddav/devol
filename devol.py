@@ -17,9 +17,11 @@ class DEvol:
     def __init__(self, genome_handler, data_path=""):
         self.genome_handler = genome_handler
         self.datafile = data_path or (datetime.now().ctime() + '.csv')
+        self.bssf = (None, 0.) # model, accuracy
         print("Genome encoding and accuracy data stored at", self.datafile, "\n")
 
     # Create a population and evolve
+    # Returns best model found in the form of (model, accuracy)
     def run(self, dataset, num_generations, pop_size, epochs, fitness=None):
         generations = trange(num_generations, desc="Generations")
         (self.x_train, self.y_train), (self.x_test, self.y_test) = dataset
@@ -27,7 +29,10 @@ class DEvol:
         members = [self.genome_handler.generate() for _ in range(pop_size)]
         fit = []
         for i in trange(len(members), desc="Gen 1 Models Fitness Eval"):
-            fit.append(self.evaluate(members[i], epochs)[1])
+            loss, acc, model = self.evaluate(members[i], epochs)
+            if acc > self.bssf[1]:
+                self.bssf = (model, acc)
+            fit.append(acc)
         pop = Population(members, fit, fitness)
         fit = np.array(fit)
         tqdm.write("Generation 1:\t\tmax: {0}\t\taverage: {1}\t\tstd: {2}".format(max(fit), np.mean(fit), np.std(fit)))
@@ -44,10 +49,15 @@ class DEvol:
                 members[i] = self.mutate(members[i], gen)
             fit = []
             for i in trange(len(members), desc="Gen %i Models Fitness Eval" % (gen + 1)):
-                fit.append(self.evaluate(members[i], epochs)[1])
+                loss, acc, model = self.evaluate(members[i], epochs)
+                if acc > self.bssf[1]:
+                    self.bssf = (model, acc)
+                fit.append(acc)
             pop = Population(members, fit, fitness)
             fit = np.array(fit)
             tqdm.write("Generation {3}:\t\tmax: {0}\t\taverage: {1}\t\tstd: {2}".format(max(fit), np.mean(fit), np.std(fit), gen + 1))
+        
+        return self.bssf
 
     def evaluate(self, genome, epochs):
         model = self.genome_handler.decode(genome)
@@ -64,7 +74,7 @@ class DEvol:
             row = list(genome) + [loss, accuracy]
             writer.writerow(row)  
 
-        return loss, accuracy
+        return loss, accuracy, model
     
     def crossover(self, genome1, genome2):
         crossIndexA = rand.randint(0, len(genome1))
