@@ -44,11 +44,11 @@ class GenomeHandler:
             # Batch Normalization
             [0, (1 if batch_normalization else 0)],
             # Activation
-            range(len(self.activation)),
+            list(range(len(self.activation))),
             # Dropout
             [(i if dropout else 0) for i in range(11)],
             # Max Pooling
-            range(3) if max_pooling else 0,
+            list(range(3)) if max_pooling else 0,
         ]
         self.dense_layer_shape = [
             # Present
@@ -58,7 +58,7 @@ class GenomeHandler:
             # Batch Normalization
             [0, (1 if batch_normalization else 0)],
             # Activation
-            range(len(self.activation)),
+            list(range(len(self.activation))),
             # Dropout
             [(i if dropout else 0) for i in range(11)],
         ]
@@ -72,7 +72,7 @@ class GenomeHandler:
     def mutate(self, genome, num_mutations):
         num_mutations = np.random.choice(num_mutations)
         for i in range(num_mutations):
-            index = np.random.choice(range(1, len(genome)))
+            index = np.random.choice(list(range(1, len(genome))))
             if index < self.convolution_layer_size * self.convolution_layers:
                 if genome[index - index % self.convolution_layer_size]:
                     range_index = index % self.convolution_layer_size
@@ -91,7 +91,7 @@ class GenomeHandler:
                 elif rand.uniform(0, 1) <= 0.01:
                     genome[present_index + offset] = 1
             else:
-                genome[index] = np.random.choice(range(len(self.optimizer))) 
+                genome[index] = np.random.choice(list(range(len(self.optimizer)))) 
         return genome
 
     def decode(self, genome):
@@ -153,6 +153,6 @@ class GenomeHandler:
         for i in range(self.dense_layers):
             for r in self.dense_layer_shape:
                 genome.append(np.random.choice(r))
-        genome.append(np.random.choice(range(len(self.optimizer))))
+        genome.append(np.random.choice(list(range(len(self.optimizer)))))
         genome[0] = 1
         return genome
