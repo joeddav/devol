@@ -1,7 +1,6 @@
 from keras.datasets import mnist
 from keras.utils.np_utils import to_categorical
-from devol import DEvol
-from genome_handler import GenomeHandler
+from devol import DEvol, GenomeHandler
 import numpy as np
 
 # **Prepare dataset**

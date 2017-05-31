@@ -37,6 +37,8 @@ At worst, DEvol could give you insight into improving your model architecture. A
 
 ## Wanna Try It?
 
+To setup, just clone the repo and run `pip install -e path/to/repo`. You should then be able to access `devol` globally.
+
 DEvol is pretty straightforward to use for basic classification problems. See `demo.ipynb` for an example. There are three basic steps:
 
 1. **Prep your dataset.** DEvol expects a classification problem with labels that are one-hot encoded as it uses `categorical_crossentropy` for its loss function. Otherwise, you can prep your data however you'd like. Just pass your input shape into `GenomeHandler`.
