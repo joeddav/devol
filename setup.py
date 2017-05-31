@@ -4,7 +4,7 @@ setup(name='devol',
     version='0.01',
     description='Automated deep neural network design via genetic programming.',
     url='https//github.com/joedav/devol',
-    author='Joe Davidson',
+    author='Joe Davison',
     author_email='josephddavison@gmail.com',
     license='MIT',
 
@@ -29,11 +29,11 @@ setup(name='devol',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 2.7',
     ],
-    keywords='genetic algorithms',
+    keywords='genetic algorithm',
 
     install_requires=['keras',
-                      'tensorflow',
                       'tqdm'
                      ],
 )
