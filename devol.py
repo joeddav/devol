@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+
 from genome_handler import GenomeHandler
 import numpy as np
 from keras.models import Sequential
@@ -11,98 +12,145 @@ import random as rand
 import csv
 from tqdm import trange, tqdm
 import sys
+import operator
+
+METRIC_OPS = [operator.__lt__, operator.__gt__]
+METRIC_OBJECTIVES = [min, max]
+
 
 class DEvol:
 
     def __init__(self, genome_handler, data_path=""):
         self.genome_handler = genome_handler
         self.datafile = data_path or (datetime.now().ctime() + '.csv')
-        self.bssf = (None, 0.) # model, accuracy
+        self.bssf = (None, float('inf'), 0.)  # model, loss, accuracy
+
         print("Genome encoding and accuracy data stored at", self.datafile, "\n")
 
+    def set_objective(self, metric):
+        """set the metric and objective for this search  should be 'accuracy' or 'loss'"""
+        if metric is 'acc':
+            metric = 'accuracy'
+        if not metric in ['loss', 'accuracy']:
+            raise ValueError(
+                'Invalid metric name {} provided - should be "accuracy" or "loss"'.format(metric))
+        self.metric = metric
+        self.objective = "max" if self.metric is "accuracy" else "min"
+        self.metric_index = 1 if self.metric is 'loss' else -1
+        self.metric_op = METRIC_OPS[self.objective is 'max']
+        self.metric_objective = METRIC_OBJECTIVES[self.objective is 'max']
+
     # Create a population and evolve
-    # Returns best model found in the form of (model, accuracy)
-    def run(self, dataset, num_generations, pop_size, epochs, fitness=None):
+    # Returns best model found in the form of (model, loss, accuracy)
+    def run(self, dataset, num_generations, pop_size, epochs, fitness=None, metric='accuracy'):
+        """run genetic search on dataset given number of generations and population size
+
+        Args:
+            dataset : tuple or list of numpy arrays in form ((train_data, train_labels), (validation_data, validation_labels))
+            num_generations (int): number of generations to search
+            pop_size (int): initial population size
+            epochs (int): epochs to run each search, passed to keras model.fit -currently searches are
+                            curtailed if no improvement is seen in 1 epoch
+            fitness (None, optional): scoring function to be applied to population scores, will be called on a numpy array
+                                      which is a  min/max scaled version of evaluated model metrics, so
+                                      It should accept a real number including 0. If left as default just the min/max
+                                      scaled values will be used.
+            metric (str, optional): must be "accuracy" or "loss" , defines what to optimize during search
+
+        Returns:
+            (keras model, float, float ): best model found in the form of (model, loss, accuracy)
+        """
+        self.set_objective(metric)
         generations = trange(num_generations, desc="Generations")
         (self.x_train, self.y_train), (self.x_test, self.y_test) = dataset
         # Generate initial random population
         members = [self.genome_handler.generate() for _ in range(pop_size)]
         fit = []
+        # where to look for our metric in bssf..
+        metric_index = 1 if self.metric is 'loss' else -1
         for i in trange(len(members), desc="Gen 1 Models Fitness Eval"):
-            loss, acc, model = self.evaluate(members[i], epochs)
-            if acc > self.bssf[1]:
-                self.bssf = (model, acc)
-            fit.append(acc)
-        pop = Population(members, fit, fitness)
-        fit = np.array(fit)
-        tqdm.write("Generation 1:\t\tmax: {0}\t\taverage: {1}\t\tstd: {2}".format(max(fit), np.mean(fit), np.std(fit)))
+            res = self.evaluate(members[i], epochs)
+            v = res[metric_index]
+            if self.metric_op(v, self.bssf[metric_index]):
+                self.bssf = res
+            fit.append(v)
 
+        fit = np.array(fit)
+        pop = Population(members, fit, fitness, obj=self.objective)
+
+        tqdm.write("Generation 1:\t\tbest {3}: {0:0.4f}\t\taverage: {1:0.4f}\t\tstd: {2:0.4f}".format(self.metric_objective(fit),
+                                                                                                      np.mean(fit), np.std(fit), self.metric))
         # Evolve over generations
         for gen in generations:
             if gen == 0:
                 continue
             members = []
-            for i in range(int(pop_size*0.95)): # Crossover
+            for i in range(int(pop_size * 0.95)):  # Crossover
                 members.append(self.crossover(pop.select(), pop.select()))
-            members += pop.getBest(pop_size - int(pop_size*0.95))
-            for i in range(len(members)): # Mutation
+            members += pop.getBest(pop_size - int(pop_size * 0.95))
+            for i in range(len(members)):  # Mutation
                 members[i] = self.mutate(members[i], gen)
             fit = []
             for i in trange(len(members), desc="Gen %i Models Fitness Eval" % (gen + 1)):
-                loss, acc, model = self.evaluate(members[i], epochs)
-                if acc > self.bssf[1]:
-                    self.bssf = (model, acc)
-                fit.append(acc)
-            pop = Population(members, fit, fitness)
+                res = self.evaluate(members[i], epochs)
+                v = res[metric_index]
+                if self.metric_op(v, self.bssf[metric_index]):
+                    self.bssf = res
+                fit.append(v)
             fit = np.array(fit)
-            tqdm.write("Generation {3}:\t\tmax: {0}\t\taverage: {1}\t\tstd: {2}".format(max(fit), np.mean(fit), np.std(fit), gen + 1))
-        
+            pop = Population(members, fit, fitness, obj=self.objective)
+
+            tqdm.write("Generation {3}:\t\tbest {4}: {0:0.4f}\t\taverage: {1:0.4f}\t\tstd: {2:0.4f}".format(self.metric_objective(fit),
+                                                                                                            np.mean(fit), np.std(fit), gen + 1, self.metric))
         return self.bssf
 
     def evaluate(self, genome, epochs):
         model = self.genome_handler.decode(genome)
         loss, accuracy = None, None
         model.fit(self.x_train, self.y_train, validation_data=(self.x_test, self.y_test),
-            epochs=epochs,
-            verbose=0,
-            callbacks=[EarlyStopping(monitor='val_loss', patience=1, verbose=0)])
+                  epochs=epochs,
+                  verbose=0,
+                  callbacks=[EarlyStopping(monitor='val_loss', patience=1, verbose=0)])
         loss, accuracy = model.evaluate(self.x_test, self.y_test, verbose=0)
-
         # Record the stats
         with open(self.datafile, 'a') as csvfile:
-            writer = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            writer = csv.writer(csvfile, delimiter=',',
+                                quotechar='"', quoting=csv.QUOTE_MINIMAL)
             row = list(genome) + [loss, accuracy]
-            writer.writerow(row)  
+            writer.writerow(row)
+        return model, loss, accuracy
 
-        return loss, accuracy, model
-    
     def crossover(self, genome1, genome2):
         crossIndexA = rand.randint(0, len(genome1))
         child = genome1[:crossIndexA] + genome2[crossIndexA:]
         return child
-    
+
     def mutate(self, genome, generation):
-        num_mutations = max(3, generation / 4) # increase mutations as program continues
+        # increase mutations as program continues
+        num_mutations = max(3, generation / 4)
         return self.genome_handler.mutate(genome, num_mutations)
+
 
 class Population:
 
     def __len__(self):
         return len(self.members)
 
-    def __init__(self, members, fitnesses, score):
+    def __init__(self, members, fitnesses, score, obj='max'):
         self.members = members
-        fitnesses -= min(fitnesses)
-        fitnesses /= max(fitnesses)
-        self.scores = list(map(score or self.score, fitnesses))
+        scores = fitnesses - fitnesses.min()
+        scores /= scores.max()
+        if obj is 'min':
+            scores = 1 - scores
+        if score:
+            self.scores = score(scores)
+        else:
+            self.scores = scores
         self.s_fit = sum(self.scores)
 
-    def score(self, fitness):
-        return (fitness * 100)**4
-
     def getBest(self, n):
-        combined = [(self.members[i], self.scores[i]) \
-                for i in range(len(self.members))]
+        combined = [(self.members[i], self.scores[i])
+                    for i in range(len(self.members))]
         sorted(combined, key=(lambda x: x[1]), reverse=True)
         return [x[0] for x in combined[:n]]
 
