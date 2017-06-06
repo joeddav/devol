@@ -19,6 +19,10 @@ class DEvol:
         self.datafile = data_path or (datetime.now().ctime() + '.csv')
         self.bssf = (None, 0.) # model, accuracy
         print("Genome encoding and accuracy data stored at", self.datafile, "\n")
+        with open(self.datafile, 'a') as csvfile:
+            writer = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            genome = genome_handler.genome_representation() + ["Val Loss", "Val Accuracy"]
+            writer.writerow(genome)
 
     # Create a population and evolve
     # Returns best model found in the form of (model, accuracy)

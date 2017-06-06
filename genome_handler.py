@@ -37,37 +37,44 @@ class GenomeHandler:
             'sigmoid',
         ]
         self.convolutional_layer_shape = [
-            # Present
-            [0, 1],
-            # Filters
-            [2**i for i in range(3, filter_range_max)],
-            # Batch Normalization
-            [0, (1 if batch_normalization else 0)],
-            # Activation
-            list(range(len(self.activation))),
-            # Dropout
-            [(i if dropout else 0) for i in range(11)],
-            # Max Pooling
-            list(range(3)) if max_pooling else 0,
+            "active",
+            "num filters",
+            "batch normalization",
+            "activation",
+            "dropout",
+            "max pooling",
         ]
         self.dense_layer_shape = [
-            # Present
-            [0, 1],
-            # Number of Nodes
-            [2**i for i in range(4, int(math.log(max_dense_nodes, 2)) + 1)],
-            # Batch Normalization
-            [0, (1 if batch_normalization else 0)],
-            # Activation
-            list(range(len(self.activation))),
-            # Dropout
-            [(i if dropout else 0) for i in range(11)],
+            "active",
+            "num nodes",
+            "batch normalization",
+            "activation",
+            "dropout",
         ]
+        self.layer_params = {
+            "active": [0, 1],
+            "num filters": [2**i for i in range(3, filter_range_max)],
+            "num nodes": [2**i for i in range(4, int(math.log(max_dense_nodes, 2)) + 1)],
+            "batch normalization": [0, (1 if batch_normalization else 0)],
+            "activation": list(range(len(self.activation))),
+            "dropout": [(i if dropout else 0) for i in range(11)],
+            "max pooling": list(range(3)) if max_pooling else 0,
+        }
+
         self.convolution_layers = max_conv_layers
         self.convolution_layer_size = len(self.convolutional_layer_shape)
         self.dense_layers = max_dense_layers - 1 # this doesn't include the softmax layer, so -1
         self.dense_layer_size = len(self.dense_layer_shape)
         self.input_shape = input_shape
         self.n_classes = n_classes
+
+    def convParam(self, i):
+        key = self.convolutional_layer_shape[i]
+        return self.layer_params[key]
+
+    def denseParam(self, i):
+        key = self.dense_layer_shape[i]
+        return self.layer_params[key]
 
     def mutate(self, genome, num_mutations):
         num_mutations = np.random.choice(num_mutations)
@@ -76,7 +83,7 @@ class GenomeHandler:
             if index < self.convolution_layer_size * self.convolution_layers:
                 if genome[index - index % self.convolution_layer_size]:
                     range_index = index % self.convolution_layer_size
-                    choice_range = self.convolutional_layer_shape[range_index]
+                    choice_range = self.convParam(range_index)
                     genome[index] = np.random.choice(choice_range)
                 elif rand.uniform(0, 1) <= 0.01: # randomly flip deactivated layers
                     genome[index - index % self.convolution_layer_size] = 1
@@ -86,7 +93,7 @@ class GenomeHandler:
                 present_index = new_index - new_index % self.dense_layer_size
                 if genome[present_index + offset]:
                     range_index = new_index % self.dense_layer_size
-                    choice_range = self.dense_layer_shape[range_index]
+                    choice_range = self.denseParam(range_index)
                     genome[index] = np.random.choice(choice_range)
                 elif rand.uniform(0, 1) <= 0.01:
                     genome[present_index + offset] = 1
@@ -147,14 +154,27 @@ class GenomeHandler:
             metrics=["accuracy"])
         return model
 
+    def genome_representation(self):
+        encoding = []
+        for i in range(self.convolution_layers):
+            for key in self.convolutional_layer_shape:
+                encoding.append("Conv" + str(i) + " " + key)
+        for i in range(self.dense_layers):
+            for key in self.dense_layer_shape:
+                encoding.append("Dense" + str(i) + " " + key)
+        encoding.append("Optimizer")
+        return encoding
+
     def generate(self):
         genome = []
         for i in range(self.convolution_layers):
-            for r in self.convolutional_layer_shape:
-                genome.append(np.random.choice(r))
+            for key in self.convolutional_layer_shape:
+                param = self.layer_params[key]
+                genome.append(np.random.choice(param))
         for i in range(self.dense_layers):
-            for r in self.dense_layer_shape:
-                genome.append(np.random.choice(r))
+            for key in self.dense_layer_shape:
+                param = self.layer_params[key]
+                genome.append(np.random.choice(param))
         genome.append(np.random.choice(list(range(len(self.optimizer)))))
         genome[0] = 1
         return genome
@@ -167,12 +187,12 @@ class GenomeHandler:
         ind = 0
         for i in range(self.convolution_layers):
             for j in range(self.convolution_layer_size):
-                if genome[ind + j] not in self.convolutional_layer_shape[j]:
+                if genome[ind + j] not in self.convParam(j):
                     return False
             ind += self.convolution_layer_size
         for i in range(self.dense_layers):
             for j in range(self.dense_layer_size):
-                if genome[ind + j] not in self.dense_layer_shape[j]:
+                if genome[ind + j] not in self.denseParam(j):
                     return False
             ind += self.dense_layer_size
         if genome[ind] not in range(len(self.optimizer)):
