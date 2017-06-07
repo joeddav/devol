@@ -40,8 +40,7 @@ class DEvol:
         self.metric_op = METRIC_OPS[self.objective is 'max']
         self.metric_objective = METRIC_OBJECTIVES[self.objective is 'max']
 
-    # Create a population and evolve
-    # Returns best model found in the form of (model, loss, accuracy)
+
     def run(self, dataset, num_generations, pop_size, epochs, fitness=None, metric='accuracy'):
         """run genetic search on dataset given number of generations and population size
 
