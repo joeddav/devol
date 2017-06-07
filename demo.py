@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 from keras.datasets import mnist
 from keras.utils.np_utils import to_categorical
 from devol import DEvol, GenomeHandler
@@ -41,5 +43,5 @@ population_size = 10
 num_epochs = 1
 
 devol = DEvol(genome_handler)
-model, accuracy = devol.run(dataset, num_generations, population_size, num_epochs)
-print model.summary()
+model, loss, accuracy = devol.run(dataset, num_generations, population_size, num_epochs)
+print(model.summary())
