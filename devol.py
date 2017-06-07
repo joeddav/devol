@@ -27,24 +27,22 @@ class DEvol:
     # Create a population and evolve
     # Returns best model found in the form of (model, accuracy)
     def run(self, dataset, num_generations, pop_size, epochs, fitness=None):
-        generations = trange(num_generations, desc="Generations")
         (self.x_train, self.y_train), (self.x_test, self.y_test) = dataset
         # Generate initial random population
         members = [self.genome_handler.generate() for _ in range(pop_size)]
         fit = []
-        for i in trange(len(members), desc="Gen 1 Models Fitness Eval"):
+        for i in range(len(members)):
+            print("\nmodel {0}/{1} - generation {2}/{3}:\n".format(i + 1, len(members), 1, num_generations))
             loss, acc, model = self.evaluate(members[i], epochs)
             if acc > self.bssf[1]:
                 self.bssf = (model, acc)
             fit.append(acc)
         pop = Population(members, fit, fitness)
         fit = np.array(fit)
-        tqdm.write("Generation 1:\t\tmax: {0}\t\taverage: {1}\t\tstd: {2}".format(max(fit), np.mean(fit), np.std(fit)))
+        print("Generation 1:\t\tmax: {0}\t\taverage: {1}\t\tstd: {2}".format(max(fit), np.mean(fit), np.std(fit)))
 
         # Evolve over generations
-        for gen in generations:
-            if gen == 0:
-                continue
+        for gen in range(1, num_generations):
             members = []
             for i in range(int(pop_size*0.95)): # Crossover
                 members.append(self.crossover(pop.select(), pop.select()))
@@ -52,14 +50,15 @@ class DEvol:
             for i in range(len(members)): # Mutation
                 members[i] = self.mutate(members[i], gen)
             fit = []
-            for i in trange(len(members), desc="Gen %i Models Fitness Eval" % (gen + 1)):
+            for i in range(len(members)):
+                print("\nmodel {0}/{1} - generation {2}/{3}:\n".format(i + 1, len(members), gen + 1, num_generations))
                 loss, acc, model = self.evaluate(members[i], epochs)
                 if acc > self.bssf[1]:
                     self.bssf = (model, acc)
                 fit.append(acc)
             pop = Population(members, fit, fitness)
             fit = np.array(fit)
-            tqdm.write("Generation {3}:\t\tmax: {0}\t\taverage: {1}\t\tstd: {2}".format(max(fit), np.mean(fit), np.std(fit), gen + 1))
+            print("Generation {3}:\t\tmax: {0}\t\taverage: {1}\t\tstd: {2}".format(max(fit), np.mean(fit), np.std(fit), gen + 1))
         
         return self.bssf
 
@@ -68,8 +67,8 @@ class DEvol:
         loss, accuracy = None, None
         model.fit(self.x_train, self.y_train, validation_data=(self.x_test, self.y_test),
             epochs=epochs,
-            verbose=0,
-            callbacks=[EarlyStopping(monitor='val_loss', patience=1, verbose=0)])
+            verbose=1,
+            callbacks=[EarlyStopping(monitor='val_loss', patience=1, verbose=1)])
         loss, accuracy = model.evaluate(self.x_test, self.y_test, verbose=0)
 
         # Record the stats

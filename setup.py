@@ -34,6 +34,5 @@ setup(name='devol',
     keywords='genetic algorithm',
 
     install_requires=['keras',
-                      'tqdm'
                      ],
 )
