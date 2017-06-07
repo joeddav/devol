@@ -1,4 +1,4 @@
-f# DEvol - Deep Neural Network Evolution
+# DEvol - Deep Neural Network Evolution
 
 DEvol (DeepEvolution) utilizes genetic programming to automatically architect a deep neural network with optimal hyperparameters for a given dataset using the Keras library. This approach should design an equal or superior model to what a human could design when working under the same constraints as are imposed upon the genetic program (e.g., maximum number of layers, maximum number of convolutional filters per layer, etc.). The current setup is designed for classification problems, though this could be extended to include any other output type as well.
 
