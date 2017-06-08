@@ -10,9 +10,10 @@ import numpy as np
 # for many introductory deep learning examples. Here, we load the data and 
 # prepare it for use by the GPU. We also do a one-hot encoding of the labels.
 
+K.set_image_data_format("channels_last")
 (x_train, y_train), (x_test, y_test) = mnist.load_data()
-x_train = x_train.reshape(x_train.shape[0], 1, 28, 28).astype('float32') / 255
-x_test = x_test.reshape(x_test.shape[0], 1, 28, 28).astype('float32') / 255
+x_train = x_train.reshape(x_train.shape[0], 28, 28, 1).astype('float32') / 255
+x_test = x_test.reshape(x_test.shape[0], 28, 28, 1).astype('float32') / 255
 y_train = to_categorical(y_train)
 y_test = to_categorical(y_test)
 dataset = ((x_train, y_train), (x_test, y_test))
