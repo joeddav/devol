@@ -10,7 +10,6 @@ from keras.callbacks import EarlyStopping
 from datetime import datetime
 import random as rand
 import csv
-from tqdm import trange, tqdm
 import sys
 import operator
 
@@ -64,7 +63,6 @@ class DEvol:
             (keras model, float, float ): best model found in the form of (model, loss, accuracy)
         """
         self.set_objective(metric)
-        generations = trange(num_generations, desc="Generations")
         (self.x_train, self.y_train), (self.x_test, self.y_test) = dataset
         # Generate initial random population
         members = [self.genome_handler.generate() for _ in range(pop_size)]
@@ -85,7 +83,7 @@ class DEvol:
         print("Generation {3}:\t\tbest {4}: {0:0.4f}\t\taverage: {1:0.4f}\t\tstd: {2:0.4f}"\
                 .format(self.metric_objective(fit), np.mean(fit), np.std(fit), 1, self.metric))
 
-        # Evolve over generations
+        # Evolve over 
         for gen in range(1, num_generations):
             members = []
             for i in range(int(pop_size * 0.95)):  # Crossover
