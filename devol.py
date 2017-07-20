@@ -76,6 +76,8 @@ class DEvol:
             v = res[metric_index]
             if self.metric_op(v, self.bssf[metric_index]):
                 self.bssf = res
+            else:
+                del res
             fit.append(v)
 
         fit = np.array(fit)
@@ -99,6 +101,8 @@ class DEvol:
                 v = res[metric_index]
                 if self.metric_op(v, self.bssf[metric_index]):
                     self.bssf = res
+                else:
+                    del res
                 fit.append(v)
 
             fit = np.array(fit)
@@ -111,11 +115,15 @@ class DEvol:
     def evaluate(self, genome, epochs):
         model = self.genome_handler.decode(genome)
         loss, accuracy = None, None
-        model.fit(self.x_train, self.y_train, validation_data=(self.x_test, self.y_test),
-                  epochs=epochs,
-                  verbose=1,
-                  callbacks=[EarlyStopping(monitor='val_loss', patience=1, verbose=1)])
-        loss, accuracy = model.evaluate(self.x_test, self.y_test, verbose=0)
+        try:
+            model.fit(self.x_train, self.y_train, validation_data=(self.x_test, self.y_test),
+                      epochs=epochs,
+                      verbose=1,
+                      callbacks=[EarlyStopping(monitor='val_loss', patience=1, verbose=1)])
+            loss, accuracy = model.evaluate(self.x_test, self.y_test, verbose=0)
+        except:
+            loss = 1.5
+            accuracy = 1 / self.genome_handler.n_classes
         # Record the stats
         with open(self.datafile, 'a') as csvfile:
             writer = csv.writer(csvfile, delimiter=',',

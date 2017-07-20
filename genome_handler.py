@@ -105,6 +105,7 @@ class GenomeHandler:
             raise ValueError("Invalid genome for specified configs")
         model = Sequential()
         offset = 0
+        dim = min(self.input_shape[:-1]) # keep track of smallest dimension
         input_layer = True
         for i in range(self.convolution_layers):
             if genome[offset]:
@@ -125,8 +126,10 @@ class GenomeHandler:
                 model.add(Activation(self.activation[genome[offset + 3]]))
                 model.add(Dropout(float(genome[offset + 4] / 20.0)))
                 max_pooling_type = genome[offset + 5]
-                if max_pooling_type == 1:
+                # must be large enough for a convolution
+                if max_pooling_type == 1 and dim >= 5:
                     model.add(MaxPooling2D(pool_size=(2, 2), padding="same"))
+                    dim = int(math.ceil(dim / 2))
             offset += self.convolution_layer_size
 
         if not input_layer:
