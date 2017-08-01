@@ -22,7 +22,6 @@ class DEvol:
     def __init__(self, genome_handler, data_path=""):
         self.genome_handler = genome_handler
         self.datafile = data_path or (datetime.now().ctime() + '.csv')
-        self.bssf = (None, float('inf'), 0.)  # model, loss, accuracy
 
         print("Genome encoding and accuracy data stored at", self.datafile, "\n")
         with open(self.datafile, 'a') as csvfile:
@@ -67,17 +66,13 @@ class DEvol:
         # Generate initial random population
         members = [self.genome_handler.generate() for _ in range(pop_size)]
         fit = []
-        # where to look for our metric in bssf..
         metric_index = 1 if self.metric is 'loss' else -1
         for i in range(len(members)):
             print("\nmodel {0}/{1} - generation {2}/{3}:\n"\
                     .format(i + 1, len(members), 1, num_generations))
             res = self.evaluate(members[i], epochs)
             v = res[metric_index]
-            if self.metric_op(v, self.bssf[metric_index]):
-                self.bssf = res
-            else:
-                del res
+            del res
             fit.append(v)
 
         fit = np.array(fit)
@@ -99,10 +94,7 @@ class DEvol:
                         .format(i + 1, len(members), gen + 1, num_generations))
                 res = self.evaluate(members[i], epochs)
                 v = res[metric_index]
-                if self.metric_op(v, self.bssf[metric_index]):
-                    self.bssf = res
-                else:
-                    del res
+                del res
                 fit.append(v)
 
             fit = np.array(fit)
@@ -110,7 +102,7 @@ class DEvol:
             print("Generation {3}:\t\tbest {4}: {0:0.4f}\t\taverage: {1:0.4f}\t\tstd: {2:0.4f}"\
                     .format(self.metric_objective(fit), np.mean(fit), np.std(fit), gen + 1, self.metric))
 
-        return self.bssf
+        return self.genome_handler.decode_best(self.datafile)
 
     def evaluate(self, genome, epochs):
         model = self.genome_handler.decode(genome)
