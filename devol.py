@@ -1,6 +1,5 @@
 from __future__ import print_function
 
-
 from genome_handler import GenomeHandler
 import numpy as np
 from keras.models import Sequential
@@ -12,6 +11,7 @@ import random as rand
 import csv
 import sys
 import operator
+import gc
 
 METRIC_OPS = [operator.__lt__, operator.__gt__]
 METRIC_OBJECTIVES = [min, max]
@@ -116,6 +116,8 @@ class DEvol:
         except:
             loss = 1.5
             accuracy = 1 / self.genome_handler.n_classes
+            gc.collect()
+            print("Model exhausted too much memory. Assigned poor score.")
         # Record the stats
         with open(self.datafile, 'a') as csvfile:
             writer = csv.writer(csvfile, delimiter=',',
@@ -131,7 +133,7 @@ class DEvol:
 
     def mutate(self, genome, generation):
         # increase mutations as program continues
-        num_mutations = max(3, generation / 4)
+        num_mutations = max(3, generation // 4)
         return self.genome_handler.mutate(genome, num_mutations)
 
 
@@ -143,7 +145,8 @@ class Population:
     def __init__(self, members, fitnesses, score, obj='max'):
         self.members = members
         scores = fitnesses - fitnesses.min()
-        scores /= scores.max()
+        if scores.max() > 0:
+            scores /= scores.max()
         if obj is 'min':
             scores = 1 - scores
         if score:
@@ -163,5 +166,5 @@ class Population:
         sum_fits = 0
         for i in range(len(self.members)):
             sum_fits += self.scores[i]
-            if sum_fits > dart:
+            if sum_fits >= dart:
                 return self.members[i]
