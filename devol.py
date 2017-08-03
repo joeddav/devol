@@ -117,7 +117,7 @@ class DEvol:
             loss = 1.5
             accuracy = 1 / self.genome_handler.n_classes
             gc.collect()
-            print("Model exhausted too much memory. Assigned poor score.")
+            print("An error occurred and the model could not train. Assigned poor score.")
         # Record the stats
         with open(self.datafile, 'a') as csvfile:
             writer = csv.writer(csvfile, delimiter=',',
