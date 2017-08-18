@@ -6,6 +6,8 @@ from keras.models import Sequential
 from keras.utils import np_utils
 from keras.datasets import mnist, cifar10
 from keras.callbacks import EarlyStopping
+import keras.backend as K
+import tensorflow as tf
 from datetime import datetime
 import random as rand
 import csv
@@ -114,9 +116,11 @@ class DEvol:
                       callbacks=[EarlyStopping(monitor='val_loss', patience=1, verbose=1)])
             loss, accuracy = model.evaluate(self.x_test, self.y_test, verbose=0)
         except:
-            loss = 1.5
+            loss = 6.66
             accuracy = 1 / self.genome_handler.n_classes
             gc.collect()
+            K.clear_session()
+            tf.reset_default_graph()
             print("An error occurred and the model could not train. Assigned poor score.")
         # Record the stats
         with open(self.datafile, 'a') as csvfile:
