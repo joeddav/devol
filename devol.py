@@ -14,6 +14,7 @@ import csv
 import sys
 import operator
 import gc
+import os
 
 METRIC_OPS = [operator.__lt__, operator.__gt__]
 METRIC_OBJECTIVES = [min, max]
@@ -24,6 +25,9 @@ class DEvol:
     def __init__(self, genome_handler, data_path=""):
         self.genome_handler = genome_handler
         self.datafile = data_path or (datetime.now().ctime() + '.csv')
+
+        if os.path.isfile(data_path) and os.stat(data_path).st_size > 1:
+            raise ValueError('Non-empty file %s already exists. Please change file path to prevent overwritten genome data.' % data_path)
 
         print("Genome encoding and accuracy data stored at", self.datafile, "\n")
         with open(self.datafile, 'a') as csvfile:
