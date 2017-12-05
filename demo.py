@@ -44,6 +44,6 @@ num_generations = 10
 population_size = 10
 num_epochs = 1
 
-devol = DEvol(genome_handler)
+devol = DEvol(genome_handler, 'genomes.csv')
 model, loss, accuracy = devol.run(dataset, num_generations, population_size, num_epochs)
 model.summary()

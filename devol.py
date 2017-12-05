@@ -6,6 +6,7 @@ from keras.models import Sequential
 from keras.utils import np_utils
 from keras.datasets import mnist, cifar10
 from keras.callbacks import EarlyStopping
+from keras.models import load_model
 import keras.backend as K
 import tensorflow as tf
 from datetime import datetime
@@ -25,6 +26,7 @@ class DEvol:
     def __init__(self, genome_handler, data_path=""):
         self.genome_handler = genome_handler
         self.datafile = data_path or (datetime.now().ctime() + '.csv')
+        self.bssf = -1
 
         if os.path.isfile(data_path) and os.stat(data_path).st_size > 1:
             raise ValueError('Non-empty file %s already exists. Please change file path to prevent overwritten genome data.' % data_path)
@@ -108,7 +110,7 @@ class DEvol:
             print("Generation {3}:\t\tbest {4}: {0:0.4f}\t\taverage: {1:0.4f}\t\tstd: {2:0.4f}"\
                     .format(self.metric_objective(fit), np.mean(fit), np.std(fit), gen + 1, self.metric))
 
-        return self.genome_handler.decode_best(self.datafile)
+        return load_model('best-model.h5')
 
     def evaluate(self, genome, epochs):
         model = self.genome_handler.decode(genome)
@@ -132,6 +134,16 @@ class DEvol:
                                 quotechar='"', quoting=csv.QUOTE_MINIMAL)
             row = list(genome) + [loss, accuracy]
             writer.writerow(row)
+
+        met = loss if self.metric == 'loss' else accuracy
+        if self.bssf is -1 or self.metric_op(met, self.bssf) and accuracy is not 0:
+            try:
+                os.remove('best-model.h5')
+            except OSError:
+                pass
+            self.bssf = met
+            model.save('best-model.h5')
+
         return model, loss, accuracy
 
     def crossover(self, genome1, genome2):
