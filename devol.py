@@ -67,7 +67,7 @@ class DEvol:
             metric (str, optional): must be "accuracy" or "loss" , defines what to optimize during search
 
         Returns:
-            (keras model, float, float ): best model found in the form of (model, loss, accuracy)
+            keras model: best model found
         """
         self.set_objective(metric)
         (self.x_train, self.y_train), (self.x_test, self.y_test) = dataset
