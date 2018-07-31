@@ -23,7 +23,7 @@ Below is a highly simplified visualization of how genetic crossover might take
 place between two models.
 
 <img width="75%" src="https://preview.ibb.co/gdMDak/crossover.png">
-_Genetic crossover and mutation of neural networks_
+<i>Genetic crossover and mutation of neural networks</i>
 
 ## Results
 
@@ -42,7 +42,7 @@ fine-tuning, or other optimization techniques. However, virtually any of these
 methods could be incorporated into the genetic program. 
 
 <img width="75%" src="https://preview.ibb.co/i4BDak/running_max.png">
-_Running max of MNIST accuracies across 20 generations_
+<i>Running max of MNIST accuracies across 20 generations</i>
 
 ## Application
 
