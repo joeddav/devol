@@ -1,8 +1,8 @@
 from setuptools import setup, find_packages
 
 setup(name='devol',
-    version='0.01',
-    description='Automated deep neural network design via genetic programming.',
+    version='0.02',
+    description='Genetic search for CNN classifier in Keras',
     url='https//github.com/joedav/devol',
     author='Joe Davison',
     author_email='josephddavison@gmail.com',
@@ -33,6 +33,5 @@ setup(name='devol',
     ],
     keywords='genetic algorithm',
 
-    install_requires=['keras',
-                     ],
+    install_requires=['keras',],
 )

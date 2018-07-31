@@ -19,12 +19,40 @@ from keras.layers.normalization import BatchNormalization
 ###################################
 
 class GenomeHandler:
-    def __init__(self, max_conv_layers, max_dense_layers, max_filters, max_dense_nodes,
-                input_shape, n_classes, batch_normalization=True, dropout=True, max_pooling=True,
-                optimizers=None, activations=None):
+    """
+    Defines the configuration and handles the conversion and mutation of
+    individual genomes. Should be created and passed to a `DEvol` instance.
+
+    ---
+    Genomes are represented as fixed-with lists of integers corresponding
+    to sequential layers and properties. A model with 2 convolutional layers
+    and 1 dense layer would look like:
+
+    [<conv layer><conv layer><dense layer><optimizer>]
+
+    The makeup of the convolutional layers and dense layers is defined in the
+    GenomeHandler below under self.convolutional_layer_shape and
+    self.dense_layer_shape. <optimizer> consists of just one property.
+    """
+
+    def __init__(self, max_conv_layers, max_dense_layers, max_filters,
+                 max_dense_nodes, input_shape, n_classes,
+                 batch_normalization=True, dropout=True, max_pooling=True,
+                 optimizers=None, activations=None):
+        """
+        Creates a GenomeHandler according 
+
+        Args:
+            
+        """
         if max_dense_layers < 1:
-            raise ValueError("At least one dense layer is required for softmax layer") 
-        filter_range_max = int(math.log(max_filters, 2)) + 1 if max_filters > 0 else 0
+            raise ValueError(
+                "At least one dense layer is required for softmax layer"
+            ) 
+        if max_filters > 0:
+            filter_range_max = int(math.log(max_filters, 2)) + 1
+        else:
+            filter_range_max = 0
         self.optimizer = optimizers or [
             'adam',
             'rmsprop',
@@ -112,14 +140,16 @@ class GenomeHandler:
                 convolution = None
                 if input_layer:
                     convolution = Convolution2D(
-                                        genome[offset + 1], (3, 3),
-                                        padding='same',
-                                        input_shape=self.input_shape)
+                        genome[offset + 1], (3, 3),
+                        padding='same',
+                        input_shape=self.input_shape
+                    )
                     input_layer = False
                 else:
                     convolution = Convolution2D(
-                                        genome[offset + 1], (3, 3),
-                                        padding='same')
+                        genome[offset + 1], (3, 3),
+                        padding='same'
+                    )
                 model.add(convolution)
                 if genome[offset + 2]:
                     model.add(BatchNormalization())
@@ -201,7 +231,6 @@ class GenomeHandler:
             return False
         return True
 
-    # metric = accuracy or loss
     def best_genome(self, csv_path, metric="accuracy", include_metrics=True):
         best = max if metric is "accuracy" else min
         col = -1 if metric is "accuracy" else -2
@@ -212,6 +241,5 @@ class GenomeHandler:
             genome += list(data[row, -2:])
         return genome
 
-    # metric = accuracy or loss
     def decode_best(self, csv_path, metric="accuracy"):
         return self.decode(self.best_genome(csv_path, metric, False))
