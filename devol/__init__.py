@@ -1,4 +1,4 @@
-from devol.devol import DEvol
-from devol.genome_handler import GenomeHandler
+from devol import DEvol
+from genome_handler import GenomeHandler
 
 __all__ = ['DEvol', 'GenomeHandler']
