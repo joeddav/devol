@@ -32,6 +32,7 @@ setup(name='devol',
         'Programming Language :: Python :: 2.7',
     ],
     keywords='genetic algorithm',
+    packages=['devol'],
 
     install_requires=['keras',],
 )
