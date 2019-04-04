@@ -109,7 +109,14 @@ class DEvol:
             keras model: best model found with weights
         """
         self.set_objective(metric)
-        (self.x_train, self.y_train), (self.x_test, self.y_test) = dataset
+
+        # If no validation data is given set it to None
+        if len(dataset) == 2:
+            (self.x_train, self.y_train), (self.x_test, self.y_test) = dataset
+            self.x_val = None
+            self.y_val = None
+        else:
+            (self.x_train, self.y_train), (self.x_test, self.y_test), (self.x_val, self.y_val) = dataset
 
         # generate and evaluate initial population
         members = self._generate_random_population(pop_size)
@@ -148,16 +155,21 @@ class DEvol:
     def _evaluate(self, genome, epochs):
         model = self.genome_handler.decode(genome)
         loss, accuracy = None, None
+        fit_params = {
+            'x': self.x_train,
+            'y': self.y_train,
+            'validation_split': 0.1,
+            'epochs': epochs,
+            'verbose': 1,
+            'callbacks': [
+                EarlyStopping(monitor='val_loss', patience=1, verbose=1)
+            ]
+        }
+
+        if self.x_val is not None:
+            fit_params['validation_data'] = (self.x_val, self.y_val)
         try:
-            model.fit(self.x_train, self.y_train,
-                      validation_split=0.1,
-                      epochs=epochs,
-                      verbose=1,
-                      callbacks=[
-                          EarlyStopping(monitor='val_loss',
-                                        patience=1,
-                                        verbose=1)
-                      ])
+            model.fit(**fit_params)
             loss, accuracy = model.evaluate(self.x_test, self.y_test, verbose=0)
         except Exception as e:
             loss, accuracy = self._handle_broken_model(model, e)
