@@ -150,7 +150,7 @@ class DEvol:
         loss, accuracy = None, None
         try:
             model.fit(self.x_train, self.y_train,
-                      validation_data=(self.x_test, self.y_test),
+                      validation_split=0.1,
                       epochs=epochs,
                       verbose=1,
                       callbacks=[
