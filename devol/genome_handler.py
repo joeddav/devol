@@ -135,8 +135,10 @@ class GenomeHandler:
         if not self.is_compatible_genome(genome):
             raise ValueError("Invalid genome for specified configs")
         model = Sequential()
+        dim = 0
         offset = 0
-        dim = min(self.input_shape[:-1]) # keep track of smallest dimension
+        if self.convolution_layers > 0:
+            dim = min(self.input_shape[:-1]) # keep track of smallest dimension
         input_layer = True
         for i in range(self.convolution_layers):
             if genome[offset]:
