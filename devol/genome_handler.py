@@ -6,6 +6,7 @@ from keras.layers import Activation, Dense, Dropout, Flatten
 from keras.layers.convolutional import Convolution2D, MaxPooling2D
 from keras.layers.normalization import BatchNormalization
 
+
 class GenomeHandler:
     """
     Defines the configuration and handles the conversion and mutation of
@@ -28,11 +29,11 @@ class GenomeHandler:
                  batch_normalization=True, dropout=True, max_pooling=True,
                  optimizers=None, activations=None):
         """
-        Creates a GenomeHandler according 
+        Creates a GenomeHandler according
 
         Args:
-            max_conv_layers: The maximum number of convolutional layers           
-            max_conv_layers: The maximum number of dense (fully connected)
+            max_conv_layers: The maximum number of convolutional layers
+            max_dense_layers: The maximum number of dense (fully connected)
                     layers, including output layer
             max_filters: The maximum number of conv filters (feature maps) in a
                     convolutional layer
@@ -51,7 +52,7 @@ class GenomeHandler:
         if max_dense_layers < 1:
             raise ValueError(
                 "At least one dense layer is required for softmax layer"
-            ) 
+            )
         if max_filters > 0:
             filter_range_max = int(math.log(max_filters, 2)) + 1
         else:
@@ -93,7 +94,7 @@ class GenomeHandler:
 
         self.convolution_layers = max_conv_layers
         self.convolution_layer_size = len(self.convolutional_layer_shape)
-        self.dense_layers = max_dense_layers - 1 # this doesn't include the softmax layer, so -1
+        self.dense_layers = max_dense_layers - 1  # this doesn't include the softmax layer, so -1
         self.dense_layer_size = len(self.dense_layer_shape)
         self.input_shape = input_shape
         self.n_classes = n_classes
@@ -115,7 +116,7 @@ class GenomeHandler:
                     range_index = index % self.convolution_layer_size
                     choice_range = self.convParam(range_index)
                     genome[index] = np.random.choice(choice_range)
-                elif rand.uniform(0, 1) <= 0.01: # randomly flip deactivated layers
+                elif rand.uniform(0, 1) <= 0.01:  # randomly flip deactivated layers
                     genome[index - index % self.convolution_layer_size] = 1
             elif index != len(genome) - 1:
                 offset = self.convolution_layer_size * self.convolution_layers
@@ -128,7 +129,7 @@ class GenomeHandler:
                 elif rand.uniform(0, 1) <= 0.01:
                     genome[present_index + offset] = 1
             else:
-                genome[index] = np.random.choice(list(range(len(self.optimizer)))) 
+                genome[index] = np.random.choice(list(range(len(self.optimizer))))
         return genome
 
     def decode(self, genome):
@@ -138,7 +139,7 @@ class GenomeHandler:
         dim = 0
         offset = 0
         if self.convolution_layers > 0:
-            dim = min(self.input_shape[:-1]) # keep track of smallest dimension
+            dim = min(self.input_shape[:-1])  # keep track of smallest dimension
         input_layer = True
         for i in range(self.convolution_layers):
             if genome[offset]:
@@ -184,11 +185,11 @@ class GenomeHandler:
                 model.add(Activation(self.activation[genome[offset + 3]]))
                 model.add(Dropout(float(genome[offset + 4] / 20.0)))
             offset += self.dense_layer_size
-        
+
         model.add(Dense(self.n_classes, activation='softmax'))
         model.compile(loss='categorical_crossentropy',
-            optimizer=self.optimizer[genome[offset]],
-            metrics=["accuracy"])
+                      optimizer=self.optimizer[genome[offset]],
+                      metrics=["accuracy"])
         return model
 
     def genome_representation(self):
@@ -218,7 +219,7 @@ class GenomeHandler:
 
     def is_compatible_genome(self, genome):
         expected_len = self.convolution_layers * self.convolution_layer_size \
-                        + self.dense_layers * self.dense_layer_size + 1
+            + self.dense_layers * self.dense_layer_size + 1
         if len(genome) != expected_len:
             return False
         ind = 0
