@@ -49,7 +49,7 @@ class DEvol:
                     will be stored in
         """
         self.genome_handler = genome_handler
-        self.datafile = data_path or (datetime.now().ctime() + '.csv')
+        self.datafile = data_path or (datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + '.csv')
         self._bssf = -1
 
         if os.path.isfile(data_path) and os.stat(data_path).st_size > 1:
